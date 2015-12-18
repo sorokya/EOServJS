@@ -86,6 +86,16 @@ var action = {
   INIT: 255
 }
 
+function bufferToStr(buff) {
+  var ret = '';
+
+  for(var i = 0; i < buff.length; i++) {
+      ret += String.fromCharCode(buff[i]);
+  }
+
+  return ret;
+}
+
 function packEOInt(b1, b2, b3, b4) {
   function checkByte(b) {
     if(b === 254) {
@@ -156,6 +166,10 @@ function processor() {
     if(emulti_d === 0 || str[2].charCodeAt() === family.INIT && str[3].charCodeAt() === action.INIT) {
       return str;
     }
+    
+    var packetLength = str.substr(0, 2);
+
+    str = str.substr(2); // cut off the length
 
     var newStr = [];
     var length = str.length;
@@ -357,8 +371,8 @@ function packetBuilder(fam, act) {
 
     retData += String.fromCharCode(length[0]);
     retData += String.fromCharCode(length[1]);
-    retData += String.fromCharCode(fam);
     retData += String.fromCharCode(act);
+    retData += String.fromCharCode(fam);
     retData += data;
 
     return retData;
@@ -380,20 +394,10 @@ function packetBuilder(fam, act) {
 }
 
 function packetReader(d) {
-  var data = bufferToStr(d.slice(2));
-  var pAction = data[1].charCodeAt();
-  var pFamily = data[0].charCodeAt();
+  var data = d[1].charCodeAt() === 254 ? d.slice(2) : d;
+  var pAction = data[0].charCodeAt();
+  var pFamily = data[1].charCodeAt();
   var pos = 2;
-
-  function bufferToStr(buff) {
-    var ret = '';
-
-    for(var i = 0; i < buff.length; i++) {
-      ret += String.fromCharCode(buff[i]);
-    }
-
-    return ret;
-  }
 
   function remaining() {
     return data.length - pos;
@@ -450,8 +454,11 @@ function packetReader(d) {
     return ret;
   }
 
-  function getBreakString(breakchar) {
-
+  function getBreakString() {
+    var length = data.indexOf(String.fromCharCode(255), pos);
+    var ret = getFixedString(length - pos);
+    pos += 1;
+    return ret;
   }
 
   function getEndString() {
@@ -480,6 +487,7 @@ module.exports = {
   processor: processor,
   packEOInt: packEOInt,
   unpackEOInt: unpackEOInt,
+  bufferToStr: bufferToStr,
   PID: PID,
   EPID: EPID
 };

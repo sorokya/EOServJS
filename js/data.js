@@ -27,17 +27,35 @@ function data() {
   checkDirectory('db/guilds');
   checkDirectory('db/bans');
 
-  function newUser() {
+  function newUser(username, password, realname, location, email, computerName, hdid) {
     return {
       account: {
-        username: '',
-        password: '',
-        realname: '',
-        location: '',
-        email: ''
+        username: username,
+        password: password,
+        realname: realname,
+        location: location,
+        email: email,
+        computerName: computerName,
+        hdid: hdid
       },
       characters: [
-      ]
+      ],
+      save: function(fn_callback) {
+        var user = this;
+        fs.readdir('./db/users', function(err, files) {
+          var fileName = files.length + '.json';
+          
+          fs.writeFile('./db/users/' + fileName, JSON.stringify({
+            account: user.account,
+            characters: user.characters
+          }), function(err) {
+            if(!err) {
+              users.push(user);
+              fn_callback();
+            }
+          });
+        });
+      }
     }
   }
   
@@ -117,7 +135,8 @@ function data() {
       });
       
       return count;
-    }
+    },
+    newUser: newUser
   }
 }
 

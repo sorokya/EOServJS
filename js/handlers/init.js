@@ -40,7 +40,7 @@ function init_handler(client, reader) {
 
   var hdid = Number(reader.getEndString());
 
-  var builder = packet.builder(packet.family.INIT, packet.action.INIT);
+  var reply = packet.builder(packet.family.INIT, packet.action.INIT);
 
   var response = solveChallenge(challenge);
   var emulti_e = utils.random(6, 12);
@@ -49,16 +49,16 @@ function init_handler(client, reader) {
   client.initNewSequence();
   var seqBytes = client.getInitSequenceBytes();
 
-  builder.addByte(initReply.ok);
-  builder.addByte(seqBytes[0]);
-  builder.addByte(seqBytes[1]);
-  builder.addByte(emulti_e);
-  builder.addByte(emulti_d);
-  builder.addShort(0);
-  builder.addThree(response);
+  reply.addByte(initReply.ok);
+  reply.addByte(seqBytes[0]);
+  reply.addByte(seqBytes[1]);
+  reply.addByte(emulti_e);
+  reply.addByte(emulti_d);
+  reply.addShort(0);
+  reply.addThree(response);
 
   client.processor.setEMulti(emulti_e, emulti_d);
-  client.write(builder);
+  client.write(reply);
   client.state = client.clientState.Initialized;
 
   // TODO: handled banned

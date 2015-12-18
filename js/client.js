@@ -1,5 +1,7 @@
 var packet = require('./packet.js');
 var init_handler = require('./handlers/init.js');
+var login_handler = require('./handlers/login.js');
+var account_handler = require('./handlers/account.js');
 var utils = require('./utils.js');
 
 module.exports = function(socket) {
@@ -50,7 +52,7 @@ module.exports = function(socket) {
     initNewSequence: initNewSequence,
     getInitSequenceBytes: getInitSequenceBytes,
     write: function(builder) {
-      var data = builder.get();
+      var data = processor.encode(builder.get());
 
       var buffData = [];
       for(var i = 0; i < data.length; i++) {
@@ -66,14 +68,25 @@ module.exports = function(socket) {
   }
 
   socket.on('data', function(data) {
-    var reader = packet.reader(data);
+    var decData = processor.decode(packet.bufferToStr(data));
+    var reader = packet.reader(decData);
 
     switch(reader.family) {
       case packet.family.INIT:
         init_handler(client, reader);
         break;
+      case packet.family.LOGIN:
+        login_handler(client, reader);
+        break;
+      case packet.family.ACCOUNT:
+        account_handler(client, reader);
+        break;
       default:
         break;
     }
+  });
+
+  socket.on('error', function(err) {
+    
   });
 }
