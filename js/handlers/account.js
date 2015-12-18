@@ -19,7 +19,6 @@ var accountReply = {
 function account_handler(client, reader) {
 	function account_request() {
 		reader.getChar(); // ?
-		reader.getChar(); // ?
 		var username = reader.getEndString().toLowerCase();
 
 		var reply = packet.builder(packet.family.ACCOUNT, packet.action.REPLY);
@@ -56,6 +55,28 @@ function account_handler(client, reader) {
 			client.write(reply);
 		});
 	}
+	
+	function account_agree() {
+		reader.getChar();
+		
+		var username  = reader.getBreakString();
+		var oldPass = reader.getBreakString();
+		var newPass = reader.getBreakString();
+		
+		var user = data.users.filter(function (user){
+			return user.account.username === username && user.account.password === oldPass;
+		})[0];
+		
+		if(user) {
+			user.account.password = newPass;
+			user.save(function() {
+				var reply = packet.builder(packet.family.ACCOUNT, packet.action.REPLY);
+				reply.addShort(accountReply.changed);
+				reply.addString('OK');
+				client.write(reply);
+			});
+		}
+	}
 
 	switch(reader.action) {
 		case packet.action.REQUEST:
@@ -64,6 +85,8 @@ function account_handler(client, reader) {
 		case packet.action.CREATE:
 			account_create();
 			break;
+		case packet.action.AGREE:
+			account_agree();
 		default:
 			break;
 	}

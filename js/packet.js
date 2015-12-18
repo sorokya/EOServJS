@@ -442,6 +442,20 @@ function packetReader(d) {
   function getInt() {
     return getNumber(4);
   }
+  
+  function cleanString(str) {
+    var validLetters = 'abcdefghijklmonpqrstuvwxyz';
+    var validSymbols = ' 1234567890!@#$%^&*()-_=+[]{}:;\'"<>,.~`';
+    var newStr = '';
+    
+    for(var i = 0; i < str.length; i++) {
+      if(validLetters.indexOf(str[i].toLowerCase()) > -1 || validSymbols.indexOf(str[i]) > -1) {
+        newStr += str[i];
+      }
+    }
+    
+    return newStr;
+  }
 
   function getFixedString(length) {
     if (remaining() < length) {
@@ -451,7 +465,7 @@ function packetReader(d) {
     var ret = data.substr(pos, length)
     pos += ret.length;
 
-    return ret;
+    return cleanString(ret);
   }
 
   function getBreakString() {

@@ -5,6 +5,7 @@
 
 var packet = require('../packet.js');
 var utils = require('../utils.js');
+var data = require('../data.js');
 
 var loginReply = {
 	wrongUser: 1,
@@ -19,6 +20,23 @@ function login_handler(client, reader) {
 		reader.getChar(); // ?
 		var username = reader.getBreakString();
 		var password = reader.getBreakString();
+
+		var user = data.users.filter(function(user) {
+			return user.account.username === username && user.account.password === password;
+		})[0];
+		
+		var reply = packet.builder(packet.family.LOGIN, packet.action.REPLY);
+
+		if(!user) {
+			reply.addShort(loginReply.wrongUserPass);
+			client.write(reply);
+		} else {
+			reply.addShort(loginReply.ok);
+			reply.addChar(0);
+			reply.addByte(2);
+			reply.addByte(255);
+			client.write(reply);
+		}
 	}
 
 

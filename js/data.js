@@ -26,6 +26,25 @@ function data() {
   checkDirectory('db/users');
   checkDirectory('db/guilds');
   checkDirectory('db/bans');
+  
+  function saveUser(fn_callback) {
+    var user = this;
+    
+    fs.writeFile('./db/users/' + user.account.username + '.json', JSON.stringify({
+      account: user.account,
+      characters: user.characters
+    }), function(err) {
+      if(!err) {
+        if(users.filter(function (u) {
+          return u.account.username === user.account.username;
+        }).length === 0) {
+          users.push(user);
+        }
+        
+        fn_callback();
+      }
+    });
+  }
 
   function newUser(username, password, realname, location, email, computerName, hdid) {
     return {
@@ -40,22 +59,7 @@ function data() {
       },
       characters: [
       ],
-      save: function(fn_callback) {
-        var user = this;
-        fs.readdir('./db/users', function(err, files) {
-          var fileName = files.length + '.json';
-          
-          fs.writeFile('./db/users/' + fileName, JSON.stringify({
-            account: user.account,
-            characters: user.characters
-          }), function(err) {
-            if(!err) {
-              users.push(user);
-              fn_callback();
-            }
-          });
-        });
-      }
+      save: saveUser
     }
   }
   
@@ -114,9 +118,7 @@ function data() {
       var data = fs.readFileSync('./db/users/' + path);
       var user = JSON.parse(data.toString());
       
-      user.save = function() {
-        // TODO: save data
-      }
+      user.save = saveUser;
       
       users.push(user);
     });
