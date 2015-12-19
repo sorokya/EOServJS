@@ -54,11 +54,11 @@ function init_handler(client, reader) {
   reply.addByte(seqBytes[1]);
   reply.addByte(emulti_e);
   reply.addByte(emulti_d);
-  reply.addShort(0);
+  reply.addShort(client.id);
   reply.addThree(response);
 
   client.processor.setEMulti(emulti_e, emulti_d);
-  client.write(reply);
+  client.send(reply);
   client.state = client.clientState.Initialized;
 
   // TODO: handled banned
@@ -66,7 +66,6 @@ function init_handler(client, reader) {
   // builder.addByte(2);
   // client.write(builder);
   // client.close();
-
 }
 
 module.exports = init_handler;

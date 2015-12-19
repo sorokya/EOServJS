@@ -2,9 +2,10 @@ var packet = require('./packet.js');
 var init_handler = require('./handlers/init.js');
 var login_handler = require('./handlers/login.js');
 var account_handler = require('./handlers/account.js');
+var character_handler = require('./handlers/character.js');
 var utils = require('./utils.js');
 
-module.exports = function(socket) {
+module.exports = function(server, socket) {
   var clientState = {
     Uninitialized: 0,
     Initialized: 1,
@@ -18,14 +19,10 @@ module.exports = function(socket) {
     ReadData: 2
   }
 
-  var state, packet_state, version, seq_start;
+  var seq_start = 0;
 
   // packet processor
   var processor = packet.processor();
-
-  function initialize() {
-
-  }
 
   function initNewSequence() {
     seq_start = utils.random(0, 1757);
@@ -38,20 +35,23 @@ module.exports = function(socket) {
     var s2 = seq_start - s1 * 7 + 13;
 
     return [s1, s2];
-}
+  }
 
   var client = {
     clientState: clientState,
     packetState: packetState,
 
-    state: state,
-    packet_state: packet_state,
-    version: version,
+    id: server.world.generatePlayerID(),
+    state: clientState.Uninitialized,
+    packet_state: packetState.ReadLen1,
+    version: 0,
+    player: null,
     processor: processor,
+    server: server,
 
     initNewSequence: initNewSequence,
     getInitSequenceBytes: getInitSequenceBytes,
-    write: function(builder) {
+    send: function(builder) {
       var data = processor.encode(builder.get());
 
       var buffData = [];
@@ -81,12 +81,31 @@ module.exports = function(socket) {
       case packet.family.ACCOUNT:
         account_handler(client, reader);
         break;
+      case packet.family.CHARACTER:
+        character_handler(client.player, reader);
+        break;
       default:
         break;
     }
   });
 
+  function popClient() {
+    if(client.player.online) {
+      server.world.logout(client.player.username);
+    }
+
+    server.clients.slice(server.clients.indexOf(server.clients.filter(function (c) {
+      return c.id === client.id;
+    })[0]), 1);
+  }
+
   socket.on('error', function(err) {
-    
+    popClient();
   });
+
+  socket.on('end', function(err) {
+    popClient();
+  });
+
+  server.clients.push(client);
 }

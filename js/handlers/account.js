@@ -22,7 +22,7 @@ function account_handler(client, reader) {
 		var username = reader.getEndString().toLowerCase();
 
 		var reply = packet.builder(packet.family.ACCOUNT, packet.action.REPLY);
-		
+
 		if(data.users.filter(function(user) {
 			return user.account.username === username;
 		}).length > 0) {
@@ -32,13 +32,13 @@ function account_handler(client, reader) {
 			reply.addShort(accountReply.continue);
 			reply.addString('OK');
 		}
-		
-		client.write(reply);
+
+		client.send(reply);
 	}
-	
+
 	function account_create() {
 		reader.getBreakString(); // ?
-		
+
 		var username = reader.getBreakString().toLowerCase();
 		var password = reader.getBreakString();
 		var fullname = reader.getBreakString();
@@ -46,34 +46,34 @@ function account_handler(client, reader) {
 		var email = reader.getBreakString();
 		var computer = reader.getBreakString();
 		var hdid = Number(reader.getBreakString());
-		
+
 		var user = data.newUser(username, password, fullname, location, email, computer, hdid);
 		user.save(function() {
 			var reply = packet.builder(packet.family.ACCOUNT, packet.action.REPLY);
 			reply.addShort(accountReply.created);
 			reply.addString('OK');
-			client.write(reply);
+			client.send(reply);
 		});
 	}
-	
+
 	function account_agree() {
 		reader.getChar();
-		
+
 		var username  = reader.getBreakString();
 		var oldPass = reader.getBreakString();
 		var newPass = reader.getBreakString();
-		
+
 		var user = data.users.filter(function (user){
 			return user.account.username === username && user.account.password === oldPass;
 		})[0];
-		
+
 		if(user) {
 			user.account.password = newPass;
 			user.save(function() {
 				var reply = packet.builder(packet.family.ACCOUNT, packet.action.REPLY);
 				reply.addShort(accountReply.changed);
 				reply.addString('OK');
-				client.write(reply);
+				client.send(reply);
 			});
 		}
 	}
