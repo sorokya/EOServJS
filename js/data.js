@@ -3,7 +3,7 @@
  */
 
 var fs = require('fs');
-var utils = require('./utils.js')
+var utils = require('./utils.js');
 
 function data() {
   var users = [];

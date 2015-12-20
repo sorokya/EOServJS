@@ -16,6 +16,8 @@ var characterReply = {
 }
 
 function character_handler(player, reader) {
+
+  // request character creation
   function character_request() {
     var reply = packet.builder(packet.family.CHARACTER, packet.action.REPLY);
     reply.addShort(1000);
@@ -23,6 +25,7 @@ function character_handler(player, reader) {
     player.send(reply);
   }
 
+  // create character
   function character_create() {
     reader.getInt();
     var gender = reader.getShort();
@@ -71,6 +74,7 @@ function character_handler(player, reader) {
     player.send(reply);
   }
 
+  // request delete character
   function character_take() {
     reader.getShort(); // ?
     var id = reader.getInt();
@@ -82,6 +86,7 @@ function character_handler(player, reader) {
     player.send(reply);
   }
 
+  // delete character
   function character_remove() {
     reader.getInt(); // ?
     var id = reader.getShort();
@@ -113,6 +118,7 @@ function character_handler(player, reader) {
       reply.addChar(c.race);
       reply.addChar(c.admin);
 
+      // TODO: real paperdoll data
       // character->AddPaperdollData(reply, "BAHSW");*/
       reply.addShort(0);
       reply.addShort(0);

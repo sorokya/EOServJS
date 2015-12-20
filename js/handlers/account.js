@@ -17,6 +17,8 @@ var accountReply = {
 }
 
 function account_handler(client, reader) {
+
+	// request account create
 	function account_request() {
 		reader.getChar(); // ?
 		var username = reader.getEndString().toLowerCase();
@@ -36,6 +38,7 @@ function account_handler(client, reader) {
 		client.send(reply);
 	}
 
+	// create account
 	function account_create() {
 		reader.getBreakString(); // ?
 

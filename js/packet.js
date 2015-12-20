@@ -98,7 +98,7 @@ function bufferToStr(buff) {
 
 function packEOInt(b1, b2, b3, b4) {
   function checkByte(b) {
-    if(b === 254) {
+    if(!b || b === 254) {
       b = 1;
     }
 
@@ -166,7 +166,7 @@ function processor() {
     if(emulti_d === 0 || str[2].charCodeAt() === family.INIT && str[3].charCodeAt() === action.INIT) {
       return str;
     }
-    
+
     var packetLength = str.substr(0, 2);
 
     str = str.substr(2); // cut off the length
@@ -442,18 +442,18 @@ function packetReader(d) {
   function getInt() {
     return getNumber(4);
   }
-  
+
   function cleanString(str) {
     var validLetters = 'abcdefghijklmonpqrstuvwxyz';
     var validSymbols = ' 1234567890!@#$%^&*()-_=+[]{}:;\'"<>,.~`';
     var newStr = '';
-    
+
     for(var i = 0; i < str.length; i++) {
       if(validLetters.indexOf(str[i].toLowerCase()) > -1 || validSymbols.indexOf(str[i]) > -1) {
         newStr += str[i];
       }
     }
-    
+
     return newStr;
   }
 

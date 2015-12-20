@@ -53,6 +53,7 @@ function login_handler(client, reader) {
 				reply.addChar(c.race);
 				reply.addChar(c.admin);
 
+				// TODO: real paperdoll data
 				// character->AddPaperdollData(reply, "BAHSW");*/
         reply.addShort(0);
         reply.addShort(0);
