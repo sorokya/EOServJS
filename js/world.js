@@ -5,6 +5,7 @@
 var data = require('./data.js');
 var utils = require('./utils.js');
 var player = require('./player.js');
+var map = require('./map.js');
 
 var characters = [];
 var parties = [];
@@ -17,6 +18,10 @@ var instrumentIds = [];
 
 var lastCharacterCount = 0;
 var adminCount = 0;
+
+for(var i = 0; i < 278; i++) {
+  maps.push(map(i));
+}
 
 module.exports = function(server) {
   return {
