@@ -10,22 +10,12 @@ function data() {
   var guilds = [];
 
   function checkDirectory(path) {
-    fs.stat('./' + path, function(err, stats) {
-      if(err) {
-        console.log('Error checking directory: ' + path);
-      }
-
-      if(!stats) {
-        fs.mkdir('./' + path);
-      }
-    });
+    try {
+      fs.statSync('./' + path);
+    } catch (err) {
+      fs.mkdirSync('./' + path);
+    }
   }
-
-  // NOTE(sorokya): create data directories if they don't exist
-  checkDirectory('db');
-  checkDirectory('db/users');
-  checkDirectory('db/guilds');
-  checkDirectory('db/bans');
 
   function saveUser(fn_callback) {
     var user = this;
@@ -113,7 +103,14 @@ function data() {
     }
   }
 
-  function loadUsers() {
+  function loadData() {
+    
+    // NOTE(sorokya): create data directories if they don't exist
+    checkDirectory('db');
+    checkDirectory('db/users');
+    checkDirectory('db/guilds');
+    checkDirectory('db/bans');
+  
     var files = fs.readdirSync('./db/users');
 
     utils.forEach(files, function (path) {
@@ -126,7 +123,7 @@ function data() {
     });
   }
 
-  loadUsers();
+  loadData();
 
   return {
     users: users,
