@@ -27,7 +27,7 @@ function character_handler(player, reader) {
 
   // create character
   function character_create() {
-    reader.getInt();
+    reader.getShort();
     var gender = reader.getShort();
     var hairStyle = reader.getShort();
     var hairColor = reader.getShort();
@@ -76,7 +76,6 @@ function character_handler(player, reader) {
 
   // request delete character
   function character_take() {
-    reader.getShort(); // ?
     var id = reader.getInt();
 
     var reply = packet.builder(packet.family.CHARACTER, packet.action.PLAYER);
@@ -88,8 +87,8 @@ function character_handler(player, reader) {
 
   // delete character
   function character_remove() {
-    reader.getInt(); // ?
-    var id = reader.getShort();
+    reader.getShort();
+    var id = reader.getInt();
 
     var character = player.characters.filter(function (c) {
       return c.id === id;

@@ -54,6 +54,7 @@ var family = {
 
 var action = {
   REQUEST: 1,
+  ACCEPT: 2,
   REPLY: 3,
   REMOVE: 4,
   AGREE: 5,
@@ -76,12 +77,17 @@ var action = {
   SERVER: 23,
   DROP: 24,
   JUNK: 25,
+  OBTAIN: 26,
   GET: 27,
   KICK: 28,
   RANK: 29,
+  TARGET_SELF: 30,
+  TARGET_OTHER: 31,
+  TARGER_GROUP: 32,
   EXP: 33,
-  NET: 240,
-  NET2: 241,
+  DIALOG: 34,
+  PING: 240,
+  PONG: 241,
   NET3: 242,
   INIT: 255
 }
@@ -167,9 +173,9 @@ function processor() {
       return str;
     }
 
-    var packetLength = str.substr(0, 2);
+    // var packetLength = str.substr(0, 2);
 
-    str = str.substr(2); // cut off the length
+    // str = str.substr(2); // cut off the length
 
     var newStr = [];
     var length = str.length;
@@ -406,6 +412,10 @@ function packetReader(d) {
   function getNumber(length) {
     var bytes = [];
     for(var i = pos; i < pos + length; i++) {
+      if(!(data.length > i)) {
+        break;
+      }
+      
       bytes.push(data[i].charCodeAt());
     }
 
@@ -503,5 +513,12 @@ module.exports = {
   unpackEOInt: unpackEOInt,
   bufferToStr: bufferToStr,
   PID: PID,
-  EPID: EPID
+  EPID: EPID,
+  debugDataStr: function(str) {
+    var buf = [];
+    for(var i = 0; i < str.length; i++) {
+      buf.push(str[i].charCodeAt());
+    }
+    return buf;
+  }
 };

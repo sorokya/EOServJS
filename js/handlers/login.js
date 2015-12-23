@@ -17,7 +17,6 @@ var loginReply = {
 
 function login_handler(client, reader) {
 	function login_request() {
-		reader.getChar(); // ?
 		var username = reader.getBreakString().toLowerCase();
 		var password = reader.getBreakString();
 

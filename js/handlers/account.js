@@ -20,7 +20,6 @@ function account_handler(client, reader) {
 
 	// request account create
 	function account_request() {
-		reader.getChar(); // ?
 		var username = reader.getEndString().toLowerCase();
 
 		var reply = packet.builder(packet.family.ACCOUNT, packet.action.REPLY);
@@ -40,7 +39,8 @@ function account_handler(client, reader) {
 
 	// create account
 	function account_create() {
-		reader.getBreakString(); // ?
+		reader.getShort();
+		reader.getByte();
 
 		var username = reader.getBreakString().toLowerCase();
 		var password = reader.getBreakString();
@@ -60,8 +60,6 @@ function account_handler(client, reader) {
 	}
 
 	function account_agree() {
-		reader.getChar();
-
 		var username  = reader.getBreakString();
 		var oldPass = reader.getBreakString();
 		var newPass = reader.getBreakString();

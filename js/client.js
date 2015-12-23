@@ -20,12 +20,22 @@ module.exports = function(server, socket) {
   }
 
   var seq_start = 0;
+  var upcoming_seq_start = -1;
+  var seq = 0;
 
   // packet processor
   var processor = packet.processor();
 
   function initNewSequence() {
     seq_start = utils.random(0, 1757);
+  }
+  
+  function pingNewSequence() {
+    upcoming_seq_start = utils.random(0, 1757);
+  }
+  
+  function pongNewSequence() {
+    seq_start = upcoming_seq_start;
   }
 
   function getInitSequenceBytes() {
@@ -36,6 +46,12 @@ module.exports = function(server, socket) {
 
     return [s1, s2];
   }
+  
+  function genSequence() {
+    var result = seq_start + seq;
+    seq = (seq + 1) % 10;
+    return result;
+  }
 
   var client = {
     clientState: clientState,
@@ -44,6 +60,9 @@ module.exports = function(server, socket) {
     id: server.world.generatePlayerID(),
     state: clientState.Uninitialized,
     packet_state: packetState.ReadLen1,
+    data: '',
+    raw_length: [],
+    length: 0,
     version: 0,
     player: null,
     processor: processor,
@@ -64,12 +83,42 @@ module.exports = function(server, socket) {
     },
     close: function() {
       socket.destroy();
+    },
+    tick: function() {
+      
     }
   }
-
-  socket.on('data', function(data) {
-    var decData = processor.decode(packet.bufferToStr(data));
+  
+  function execute(data) {
+    var decData = processor.decode(data);
     var reader = packet.reader(decData);
+    
+    if (reader.family !== packet.family.INIT) {
+      var pingReply = reader.family === packet.family.CONNECTION && reader.action === packet.action.PING;
+      
+      if (pingReply) {
+        pongNewSequence();
+      }
+      
+      var client_seq;
+      var server_seq = genSequence();
+      if (server_seq >= 253) {
+        client_seq = reader.getShort();
+        
+        // NOTE: this seems like a total hack.. but it works.
+        if (client_seq > 1757) {
+          reader = packet.reader(decData);
+          client_seq = reader.getChar();
+        }
+      } else {
+        client_seq = reader.getChar();
+      }
+      
+      // todo: enforce seq check
+      
+    } else {
+      genSequence();
+    }
 
     switch(reader.family) {
       case packet.family.INIT:
@@ -87,10 +136,59 @@ module.exports = function(server, socket) {
       default:
         break;
     }
+  }
+
+  socket.on('data', function(data) {
+    var dataStr = packet.bufferToStr(data);
+    var done = false;
+    var oldlength;
+    
+    while (dataStr.length > 0 && !done) {
+      switch(client.packet_state) {
+        case client.packetState.ReadLen1:
+          client.raw_length[0] = dataStr[0].charCodeAt();
+          dataStr[0] = '\0';
+          dataStr = dataStr.substr(1);
+          client.packet_state = client.packetState.ReadLen2;
+          
+          if (dataStr.length === 0) {
+            break;  
+          }
+        case client.packetState.ReadLen2:
+          client.raw_length[1] = dataStr[0].charCodeAt();
+          dataStr[0] = '\0';
+          dataStr = dataStr.substr(1);
+          client.length = packet.packEOInt(client.raw_length[0], client.raw_length[1]);
+          client.packet_state = client.packetState.ReadData;
+          
+          if (dataStr.length === 0) {
+            break;  
+          }
+        case client.packetState.ReadData:
+          oldlength = client.data.length;
+          client.data += dataStr.substr(0, client.length);
+          
+          for (var i = 0; i < Math.min(dataStr.length, client.length); i++) {
+            dataStr[i] = '\0';
+          }
+          
+          dataStr = dataStr.substr(0, client.length);
+          client.length -= client.data.length - oldlength;
+          
+          if (client.length === 0) {
+            execute(client.data);
+            client.data = '';
+            client.packet_state = client.packetState.ReadLen1;
+            done = true;
+          }
+          
+          break;
+      }
+    }
   });
 
   function popClient() {
-    if(client.player.online) {
+    if(client.player && client.player.online) {
       server.world.logout(client.player.username);
     }
 
