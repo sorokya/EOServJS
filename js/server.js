@@ -16,6 +16,10 @@ var eoserver = {
   running: true,
   start: function() {
     this.eodata = eodata();
+    this.world.eif = this.eodata.EIF;
+    this.world.enf = this.eodata.ENF;
+    this.world.ecf = this.eodata.ECF;
+    this.world.esf = this.eodata.ESF;
 
     server = net.createServer();
     server.listen(port, bind);

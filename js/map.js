@@ -37,7 +37,10 @@ function map(id) {
 			var fData = packet.bufferToStr(fs.readFileSync('./data/maps/' + fileName)).split('');
 			fData.curPos = 0x03;
 			
-			var rid = readBuf(fData, 4);
+			$this.rid = readBuf(fData, 4);
+			for(var i = 0; i < $this.rid.length; i++) {
+				$this.rid[i] = $this.rid[i].charCodeAt();
+			}
 			
 			var buf;
 			var outersize;
@@ -161,6 +164,8 @@ function map(id) {
 				
 				// TODO: chests
 			}
+			
+			$this.filesize = fData.length;
 		}
 	} catch (e) {
 		console.log('error loading map ' + id);

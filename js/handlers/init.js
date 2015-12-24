@@ -5,29 +5,11 @@
 
 var packet = require('../packet.js');
 var utils = require('../utils.js');
+var structs = require('../structs.js');
 
 function solveChallenge(i) {
   ++i;
   return 110905 + (i % 9 + 1) * ((11092004 - i) % ((i % 11 + 1) * 119)) * 119 + i % 2004;
-}
-
-var initReply = {
-  outOfDate: 1,
-  ok: 2,
-  banned: 3,
-  fileMap: 4,
-  fileEIF: 5,
-  fileENF: 6,
-  fileESF: 7,
-  players: 8,
-  mapMutation: 9,
-  friendListPlayers: 10,
-  fileECF: 11
-}
-
-var banType = {
-  temp: 0,
-  perm: 2
 }
 
 function init_handler(client, reader) {
@@ -49,7 +31,7 @@ function init_handler(client, reader) {
   client.initNewSequence();
   var seqBytes = client.getInitSequenceBytes();
 
-  reply.addByte(initReply.ok);
+  reply.addByte(structs.initReply.ok);
   reply.addByte(seqBytes[0]);
   reply.addByte(seqBytes[1]);
   reply.addByte(emulti_e);

@@ -1,8 +1,11 @@
+var fs = require('fs');
 var packet = require('./packet.js');
+var structs = require('./structs.js');
 var init_handler = require('./handlers/init.js');
 var login_handler = require('./handlers/login.js');
 var account_handler = require('./handlers/account.js');
 var character_handler = require('./handlers/character.js');
+var welcome_handler = require('./handlers/welcome.js');
 var utils = require('./utils.js');
 
 module.exports = function(server, socket) {
@@ -52,7 +55,7 @@ module.exports = function(server, socket) {
     seq = (seq + 1) % 10;
     return result;
   }
-
+  
   var client = {
     clientState: clientState,
     packetState: packetState,
@@ -80,6 +83,51 @@ module.exports = function(server, socket) {
 
       var buff = new Buffer(buffData);
       socket.write(buff);
+    },
+    uploadFile: function(type, filename, init_reply) {
+    var $this = this;
+    fs.readFile('./' + filename, function(err, file) {
+        var fileStr = packet.bufferToStr(file);
+        var builder = packet.builder(packet.family.INIT, packet.action.INIT);
+        builder.addChar(init_reply);
+        
+        if (type !== structs.fileType.map) {
+          builder.addChar(1);
+        }
+        
+        builder.addSize(fileStr.length);
+        builder.addString(fileStr);
+        $this.send(builder);
+      });
+    },
+    upload: function(type, id, init_reply) {
+      switch (type) {
+        case structs.fileType.map:
+          var fileName = '';
+          
+          for (var i = 0; i <  5 - id.toString().length; i++) {
+            fileName += '0';
+          }
+          
+          fileName += id + '.emf';
+          
+          return this.uploadFile(type, 'data/maps/' + fileName, init_reply);
+          break;
+        case structs.fileType.item:
+          return this.uploadFile(type, 'data/pub/dat001.eif', init_reply);
+          break;
+        case structs.fileType.npc:
+          return this.uploadFile(type, 'data/pub/dtn001.enf', init_reply);
+          break;
+        case structs.fileType.spell:
+          return this.uploadFile(type, 'data/pub/dsl001.esf', init_reply);
+          break;
+        case structs.fileType.class:
+          return this.uploadFile(type, 'data/pub/dat001.ecf', init_reply);
+          break;
+        default:
+          return;
+      }
     },
     close: function() {
       socket.destroy();
@@ -132,6 +180,9 @@ module.exports = function(server, socket) {
         break;
       case packet.family.CHARACTER:
         character_handler(client.player, reader);
+        break;
+      case packet.family.WELCOME:
+        welcome_handler(client.player, reader);
         break;
       default:
         break;

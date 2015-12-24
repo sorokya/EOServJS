@@ -129,17 +129,17 @@ function unpackEOInt(num) {
   var oNum = num;
 
   if (oNum >= MAX3) {
-    bytes[3] = num / MAX3 + 1;
+    bytes[3] = Math.floor(num / MAX3) + 1;
     num = num % MAX3;
   }
 
   if (oNum >= MAX2) {
-    bytes[2] = num / MAX2 + 1;
+    bytes[2] = Math.floor(num / MAX2) + 1;
     num = num % MAX2;
   }
 
   if (oNum >= MAX1) {
-    bytes[1] = num / MAX1 + 1;
+    bytes[1] = Math.floor(num / MAX1) + 1;
     num = num % MAX1;
   }
 
@@ -321,6 +321,7 @@ function processor() {
 function packetBuilder(fam, act) {
   var id = PID(fam, act);
   var data = '';
+  var add_size = 0;
 
   function addByte(byte) {
     data += String.fromCharCode(byte);
@@ -370,6 +371,10 @@ function packetBuilder(fam, act) {
   function addBreakString(str) {
     data += str + String.fromCharCode(255);
   }
+  
+  function addSize(size) {
+    add_size += size;
+  }
 
   function get() {
     var retData = '';
@@ -395,6 +400,7 @@ function packetBuilder(fam, act) {
     addInt: addInt,
     addString: addString,
     addBreakString: addBreakString,
+    addSize: addSize,
     get: get
   }
 }

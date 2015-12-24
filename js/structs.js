@@ -96,5 +96,32 @@ module.exports = {
     talk: 5,
     kill: 8,
     step: 10
+  },
+  
+  fileType: {
+    map: 1,
+    item: 2,
+    npc: 3,
+    spell: 4,
+    class: 5
+  },
+  
+  initReply: {
+    outOfDate: 1,
+    ok: 2,
+    banned: 3,
+    fileMap: 4,
+    fileEIF: 5,
+    fileENF: 6,
+    fileESF: 7,
+    players: 8,
+    mapMutation: 9,
+    friendListPlayers: 10,
+    fileECF: 11
+  },
+  
+  initBanType: {
+    temp: 0,
+    perm: 2
   }
 };

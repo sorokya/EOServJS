@@ -36,6 +36,7 @@ function login_handler(client, reader) {
 			client.state = client.clientState.loggedIn;
 			client.player = client.server.world.login(username);
 			client.player.setClient(client);
+			client.player.id = client.id;
 
 			reply.addShort(loginReply.ok);
 			reply.addChar(client.player.characters.length);
@@ -54,11 +55,11 @@ function login_handler(client, reader) {
 
 				// TODO: real paperdoll data
 				// character->AddPaperdollData(reply, "BAHSW");*/
-        reply.addShort(0);
-        reply.addShort(0);
-        reply.addShort(0);
-        reply.addShort(0);
-        reply.addShort(0);
+				reply.addShort(0);
+				reply.addShort(0);
+				reply.addShort(0);
+				reply.addShort(0);
+				reply.addShort(0);
 
 				reply.addByte(255);
 			});

@@ -25,6 +25,13 @@ for(var i = 0; i < 278; i++) {
 
 module.exports = function(server) {
   return {
+    eif: null,
+    enf: null,
+    ecf: null,
+    esf: null,
+    getMap: function(id) {
+      return maps[id - 1];
+    },
     generatePlayerID: function() {
       var lowestFreeID = 1;
 
@@ -42,12 +49,18 @@ module.exports = function(server) {
     generateCharacterID: function() {
       return ++lastCharacterCount;
     },
+    loginChar: function(character) {
+      // characters.push(character);
+      // var map = this.getMap(character.map);
+      // map.enter(character);
+      // character.login();
+    },
     login: function(username) {
       return player(username);
     },
     logout: function(username) {
       var client = server.clients.filter(function(c) {
-        return c.player.username === username && c.player.online;
+        return c.player && c.player.username === username && c.player.online;
       })[0];
 
       if (client) {

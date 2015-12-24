@@ -108,8 +108,18 @@ var EIF = function () {
   } catch (e) {
     console.log('ERROR: can not read dat001.eif');
   }
+  
+  for (var i = 0; i < rid.length; i++) {
+    rid[i] = rid[i].charCodeAt();
+  }
+  
+  for (var i = 0; i < len.length; i++) {
+    len[i] = len[i].charCodeAt();
+  }
 
   return {
+    rid: rid,
+    len: len,
     get: function (id) {
       if (id < data.length) {
         return data[i];
@@ -173,8 +183,18 @@ var ENF = function () {
   } catch (e) {
     console.log('ERROR: can not read dtn001.enf');
   }
+  
+  for (var i = 0; i < rid.length; i++) {
+    rid[i] = rid[i].charCodeAt();
+  }
+  
+  for (var i = 0; i < len.length; i++) {
+    len[i] = len[i].charCodeAt();
+  }
 
   return {
+    rid: rid,
+    len: len,
     get: function (id) {
       if (id < data.length) {
         return data[i];
@@ -244,8 +264,18 @@ var ESF = function () {
   } catch (e) {
     console.log('ERROR: can not read file dsl001.esf');
   }
+  
+  for (var i = 0; i < rid.length; i++) {
+    rid[i] = rid[i].charCodeAt();
+  }
+  
+  for (var i = 0; i < len.length; i++) {
+    len[i] = len[i].charCodeAt();
+  }
 
   return {
+    rid: rid,
+    len: len,
     get: function (id) {
       if (id < data.length) {
         return data[i];
@@ -305,8 +335,18 @@ var ECF = function () {
   } catch (e) {
     console.log('ERROR: can not read file dat001.ecf');
   }
+  
+  for (var i = 0; i < rid.length; i++) {
+    rid[i] = rid[i].charCodeAt();
+  }
+  
+  for (var i = 0; i < len.length; i++) {
+    len[i] = len[i].charCodeAt();
+  }
 
   return {
+    rid: rid,
+    len: len,
     get: function (id) {
       if (id < data.length) {
         return data[i];
