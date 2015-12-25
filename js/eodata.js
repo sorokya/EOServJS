@@ -40,7 +40,63 @@ var EIF = function () {
 
       fData.splice(0, 1);
 
-      data.push(null); // first item is null
+      data.push({
+          id: 0,
+          name: '',
+          
+          graphic: 0,
+          type: 0,
+          subType: 0,
+          
+          special: 0,
+          hp: 0,
+          tp: 0,
+          minDam: 0,
+          maxDam: 0,
+          accuracy: 0,
+          evade: 0,
+          armor: 0,
+          
+          str: 0,
+          int: 0,
+          wis: 0,
+          agi: 0,
+          con: 0,
+          cha: 0,
+          
+          light: 0,
+          dark: 0,
+          earth: 0,
+          air: 0,
+          water: 0,
+          fire: 0,
+          
+          scrollMap: 0,
+          dollGraphic: 0,
+          expReward: 0,
+          hairColor: 0,
+          effect: 0,
+          key: 0,
+          
+          scrollX: 0,
+          gender: 0,
+          
+          scrollY: 0,
+          dualWieldDollGraphic: 0,
+          
+          levelReq: 0,
+          classReq: 0,
+          
+          strReq: 0,
+          intReq: 0,
+          wisReq: 0,
+          agiReq: 0,
+          conReq: 0,
+          chaReq: 0,
+          
+          weight: 0,
+          size: 0
+      });
 
       for (var i = 1; i <= numObj; i++) {
         var sizeOfName = packet.packEOInt(fData.splice(0, 1)[0].charCodeAt());
@@ -66,7 +122,7 @@ var EIF = function () {
           armor: packet.packEOInt(buf[17].charCodeAt(), buf[18].charCodeAt()),
 
           str: packet.packEOInt(buf[20].charCodeAt()),
-          intl: packet.packEOInt(buf[21].charCodeAt()),
+          int: packet.packEOInt(buf[21].charCodeAt()),
           wis: packet.packEOInt(buf[22].charCodeAt()),
           agi: packet.packEOInt(buf[23].charCodeAt()),
           con: packet.packEOInt(buf[24].charCodeAt()),
@@ -80,8 +136,17 @@ var EIF = function () {
           fire: packet.packEOInt(buf[31].charCodeAt()),
 
           scrollMap: packet.packEOInt(buf[32].charCodeAt(), buf[33].charCodeAt(), buf[34].charCodeAt()),
+          dollGraphic: packet.packEOInt(buf[32].charCodeAt(), buf[33].charCodeAt(), buf[34].charCodeAt()),
+          expReward: packet.packEOInt(buf[32].charCodeAt(), buf[33].charCodeAt(), buf[34].charCodeAt()),
+          hairColor: packet.packEOInt(buf[32].charCodeAt(), buf[33].charCodeAt(), buf[34].charCodeAt()),
+          effect: packet.packEOInt(buf[32].charCodeAt(), buf[33].charCodeAt(), buf[34].charCodeAt()),
+          key: packet.packEOInt(buf[32].charCodeAt(), buf[33].charCodeAt(), buf[34].charCodeAt()),
+          
           scrollX: packet.packEOInt(buf[35].charCodeAt()),
+          gender: packet.packEOInt(buf[35].charCodeAt()),
+          
           scrollY: packet.packEOInt(buf[36].charCodeAt()),
+          dualWieldDollGraphic: packet.packEOInt(buf[36].charCodeAt()),
 
           levelReq: packet.packEOInt(buf[37].charCodeAt(), buf[38].charCodeAt()),
           classReq: packet.packEOInt(buf[39].charCodeAt(), buf[40].charCodeAt()),
@@ -122,7 +187,7 @@ var EIF = function () {
     len: len,
     get: function (id) {
       if (id < data.length) {
-        return data[i];
+        return data[id];
       } else {
         return data[0];
       }
@@ -197,7 +262,7 @@ var ENF = function () {
     len: len,
     get: function (id) {
       if (id < data.length) {
-        return data[i];
+        return data[id];
       } else {
         return data[0];
       }
@@ -278,7 +343,7 @@ var ESF = function () {
     len: len,
     get: function (id) {
       if (id < data.length) {
-        return data[i];
+        return data[id];
       } else {
         return data[0];
       }
@@ -304,7 +369,18 @@ var ECF = function () {
 
       fData.splice(0, 1);
 
-      data.push(null); // first item is null
+      data.push({
+          id: 0,
+          name: '',
+          base: 0,
+          type: 0,
+          str: 0,
+          int: 0,
+          wis: 0,
+          agi: 0,
+          con: 0,
+          cha: 0
+      });
 
       for (var i = 1; i <= numObj; i++) {
         var sizeOfName = packet.packEOInt(fData.splice(0, 1)[0].charCodeAt());
@@ -318,7 +394,7 @@ var ECF = function () {
           base: packet.packEOInt(buf[0].charCodeAt()),
           type: packet.packEOInt(buf[1].charCodeAt()),
           str: packet.packEOInt(buf[2].charCodeAt(), buf[3].charCodeAt()),
-          intl: packet.packEOInt(buf[4].charCodeAt(), buf[5].charCodeAt()),
+          int: packet.packEOInt(buf[4].charCodeAt(), buf[5].charCodeAt()),
           wis: packet.packEOInt(buf[6].charCodeAt(), buf[7].charCodeAt()),
           agi: packet.packEOInt(buf[8].charCodeAt(), buf[9].charCodeAt()),
           con: packet.packEOInt(buf[10].charCodeAt(), buf[11].charCodeAt()),
@@ -349,7 +425,7 @@ var ECF = function () {
     len: len,
     get: function (id) {
       if (id < data.length) {
-        return data[i];
+        return data[id];
       } else {
         return data[0];
       }

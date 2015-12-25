@@ -95,7 +95,6 @@ module.exports = function(server, socket) {
           builder.addChar(1);
         }
         
-        builder.addSize(fileStr.length);
         builder.addString(fileStr);
         $this.send(builder);
       });

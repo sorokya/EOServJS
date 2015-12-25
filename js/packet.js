@@ -129,17 +129,17 @@ function unpackEOInt(num) {
   var oNum = num;
 
   if (oNum >= MAX3) {
-    bytes[3] = Math.floor(num / MAX3) + 1;
+    bytes[3] = Math.floor(num / MAX3 + 1);
     num = num % MAX3;
   }
 
   if (oNum >= MAX2) {
-    bytes[2] = Math.floor(num / MAX2) + 1;
+    bytes[2] = Math.floor(num / MAX2 + 1);
     num = num % MAX2;
   }
 
   if (oNum >= MAX1) {
-    bytes[1] = Math.floor(num / MAX1) + 1;
+    bytes[1] = Math.floor(num / MAX1 + 1);
     num = num % MAX1;
   }
 
@@ -378,7 +378,7 @@ function packetBuilder(fam, act) {
 
   function get() {
     var retData = '';
-    var length = unpackEOInt(data.length + 2);
+    var length = unpackEOInt(data.length + 2 + add_size);
 
     retData += String.fromCharCode(length[0]);
     retData += String.fromCharCode(length[1]);

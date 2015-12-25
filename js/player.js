@@ -4,6 +4,7 @@
 
 var data = require('./data.js');
 var utils = require('./utils.js');
+var character = require('./character.js');
 
 module.exports = function(username) {
   var user = data.users.filter(function(u) {
@@ -21,11 +22,12 @@ module.exports = function(username) {
     admin: null,
     world: null,
     addCharacter: function (name, gender, hairStyle, hairColor, race) {
-      var character = data.newCharacter(name, gender, hairStyle, hairColor, race);
-      user.characters.push(character);
+      var charData = data.newCharacter(name, gender, hairStyle, hairColor, race);
+      var new_character = character(charData, this.world, user);
+      user.characters.push(charData);
       user.save();
-      character.id = this.world.generateCharacterID();
-      this.characters.push(character);
+      new_character.player = this;
+      this.characters.push(new_character);
     },
     validName: function (name) {
       for(var i = 0; i < name.length; i++) {
@@ -47,8 +49,9 @@ module.exports = function(username) {
       // NOTE(sorokya): load characters after client is set
       if (user.characters.length > 0) {
         utils.forEach(user.characters, function(char) {
-          char.id = player.world.generateCharacterID();
-          player.characters.push(char);
+          var _char = character(char, player.world, user);
+          _char.player = player;
+          player.characters.push(_char);
         });
       }
     }

@@ -123,5 +123,114 @@ module.exports = {
   initBanType: {
     temp: 0,
     perm: 2
+  },
+  
+  ENFType: {
+      NPC: 0,
+      Passive: 1,
+      Aggressive: 2,
+      Unknown1: 3,
+      Unknown2: 4,
+      Unknown3: 5,
+      Shop: 6,
+      Inn: 7,
+      Unknown4: 8,
+      Bank: 9,
+      Barber: 10,
+      Guild: 11,
+      Priest: 12,
+      Law: 13,
+      Skills: 14,
+      Quest: 15
+  },
+  
+  spellTarget: {
+      invalid: 0,
+      self: 1,
+      npc: 2,
+      player: 3,
+      group: 4
+  },
+  
+  warpAnimation: {
+      none: 0,
+      scroll: 1,
+      admin: 2,
+      invalid: 255
+  },
+  
+  equipmentLocation: {
+      boots: 0,
+      accessory: 1,
+      gloves: 2,
+      belt: 3,
+      armor: 4,
+      necklace: 5,
+      hat: 6,
+      shield: 7,
+      weapon: 8,
+      ring1: 9,
+      ring2: 10,
+      armlet1: 11,
+      armlet2: 12,
+      bracer1: 13,
+      bracer2: 14
+  },
+  
+  EIFType: {      
+      static: 0,
+      unknownType1: 1,
+      money: 2,
+      heal: 3,
+      teleport: 4,
+      spell: 5,
+      expReward: 6,
+      statReward: 7,
+      skillReward: 8,
+      key: 9,
+      weapon: 10,
+      shield: 11,
+      armor: 12,
+      hat: 13,
+      boots: 14,
+      gloves: 15,
+      accessory: 16,
+      belt: 17,
+      necklace: 18,
+      ring: 19,
+      armlet: 20,
+      bracer: 21,
+      beer: 22,
+      effectPotion: 23,
+      hairDye: 24,
+      cureCurse: 25
+  },
+  
+  EIFSubType: {
+      none: 0,
+      ranged: 1,
+      arrows: 2,
+      wings: 3,
+      twoHanded: 4
+  },
+  
+  EIFSpecial: {
+      normal: 0,
+      rare: 1,
+      unknownSpecial: 2,
+      unique: 3,
+      lore: 4,
+      cursed: 5
+  },
+  
+  EIFSize: {
+      oneByOne: 0,
+      oneByTwo: 1,
+      oneByThree: 2,
+      oneByFour: 3,
+      twoByOne: 4,
+      twoByTwo: 5,
+      twoByThree: 6,
+      twoByFour: 7
   }
 };

@@ -52,15 +52,7 @@ function login_handler(client, reader) {
 				reply.addChar(c.hairColor);
 				reply.addChar(c.race);
 				reply.addChar(c.admin);
-
-				// TODO: real paperdoll data
-				// character->AddPaperdollData(reply, "BAHSW");*/
-				reply.addShort(0);
-				reply.addShort(0);
-				reply.addShort(0);
-				reply.addShort(0);
-				reply.addShort(0);
-
+				c.addPaperdollData(reply, 'BAHSW');
 				reply.addByte(255);
 			});
 

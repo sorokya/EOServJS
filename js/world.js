@@ -50,10 +50,10 @@ module.exports = function(server) {
       return ++lastCharacterCount;
     },
     loginChar: function(character) {
-      // characters.push(character);
-      // var map = this.getMap(character.map);
-      // map.enter(character);
-      // character.login();
+      characters.push(character);
+      var map = this.getMap(character.mapid);
+      map.enter(character);
+      character.login();
     },
     login: function(username) {
       return player(username);

@@ -6,5 +6,11 @@ module.exports = {
     for(var i = 0; i < ary.length; i++) {
       fn_callback(ary[i], i);
     }
+  },
+  pathLength: function(x1, y1, x2, y2) {
+      var dx = Math.abs(x1 - x2);
+      var dy = Math.abs(y1 - y2);
+      
+      return dx + dy;
   }
 };

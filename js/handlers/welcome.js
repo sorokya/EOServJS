@@ -22,7 +22,7 @@ function welcome_handler(player, reader) {
 		}
 		
 		player.character = char;
-		// player.character.calculateStats();
+		player.character.calculateStats();
 		var guild_str = '';
 		var guild_rank = '';
 		
@@ -31,12 +31,12 @@ function welcome_handler(player, reader) {
 		reply.addShort(player.id);
 		reply.addInt(player.character.id);
 		
-		reply.addShort(player.character.map);
-		reply.addByte(player.world.getMap(player.character.map).rid[0]);
-		reply.addByte(player.world.getMap(player.character.map).rid[1]);
-		reply.addByte(player.world.getMap(player.character.map).rid[2]);
-		reply.addByte(player.world.getMap(player.character.map).rid[3]);
-		reply.addThree(player.world.getMap(player.character.map).filesize);
+		reply.addShort(player.character.mapid);
+		reply.addByte(player.world.getMap(player.character.mapid).rid[0]);
+		reply.addByte(player.world.getMap(player.character.mapid).rid[1]);
+		reply.addByte(player.world.getMap(player.character.mapid).rid[2]);
+		reply.addByte(player.world.getMap(player.character.mapid).rid[3]);
+		reply.addThree(player.world.getMap(player.character.mapid).filesize);
 		reply.addByte(player.world.eif.rid[0]);
 		reply.addByte(player.world.eif.rid[1]);
 		reply.addByte(player.world.eif.rid[2]);
@@ -66,35 +66,37 @@ function welcome_handler(player, reader) {
 		reply.addBreakString(guild_str);
 		reply.addBreakString(guild_rank);
 		reply.addChar(player.character.class);
-		reply.addString('   ');
+		reply.addString(player.character.paddedGuildTag());
 		reply.addChar(player.character.admin);
 		reply.addChar(player.character.level);
 		reply.addInt(player.character.exp);
 		reply.addInt(player.character.usage);
 		reply.addShort(player.character.hp);
-		reply.addShort(player.character.hp); // TODO: max-hp
+		reply.addShort(player.character.max_hp);
 		reply.addShort(player.character.tp);
-		reply.addShort(player.character.tp); // TODO: max-tp
-		reply.addShort(10); // TODO: max-sp
+		reply.addShort(player.character.max_tp);
+		reply.addShort(player.character.max_sp);
 		reply.addShort(player.character.statpoints);
 		reply.addShort(player.character.skillpoints);
 		reply.addShort(player.character.karma);
-		reply.addShort(1); // TODO: min-dam
-		reply.addShort(1); // TODO: max-dam
-		reply.addShort(1); // TODO: accuracy
-		reply.addShort(1); // TODO: evade
-		reply.addShort(1); // TODO: armor
-		reply.addShort(player.character.str);
-		reply.addShort(player.character.wis);
-		reply.addShort(player.character.intl);
-		reply.addShort(player.character.agi);
-		reply.addShort(player.character.con);
-		reply.addShort(player.character.cha);
-		for (var i = 0; i < 15; i++) {
-			reply.addShort(0); // TODO: paperdoll
-		}
+		reply.addShort(player.character.min_dmg);
+		reply.addShort(player.character.max_dmg);
+		reply.addShort(player.character.accuracy);
+		reply.addShort(player.character.evade);
+		reply.addShort(player.character.armor);
+		reply.addShort(player.character.adjust_str);
+		reply.addShort(player.character.adjust_int);
+		reply.addShort(player.character.adjust_wis);
+		reply.addShort(player.character.adjust_agi);
+		reply.addShort(player.character.adjust_con);
+		reply.addShort(player.character.adjust_cha);
+		
+        utils.forEach(player.character.paperdoll, function(item) {
+           reply.addShort(item); 
+        });
+        
 		reply.addChar(player.character.guild_rank);
-		reply.addShort(76);
+		reply.addShort(76); // Jail Map ID
 		reply.addShort(4); // ?
 		reply.addChar(24); // ?
 		reply.addChar(24); // ?
@@ -110,83 +112,69 @@ function welcome_handler(player, reader) {
 	// welcome message
 	function welcome_msg() {
 		reader.getThree(); // ?
-		player.world.login(player.character);
+		player.world.loginChar(player.character);
 		player.client.state = player.client.clientState.Playing;
+        
+        var updateCharacters = [];
+        
+        utils.forEach(player.character.map.characters, function(char) {
+           if (player.character.charInRange(char)) {
+               updateCharacters.push(char);
+           } 
+        });
 		
 		var reply = packet.builder(packet.family.WELCOME, packet.action.REPLY);
 		reply.addShort(2); // REPLY_WELCOME sub-id
 		reply.addByte(255);
 		
 		for (var i = 0; i < 9; i++) {
-			reply.addBreakString('Jonas rules!');
+			reply.addBreakString('Server News');
 		}
 		
-		reply.addChar(0); // weight
-		reply.addChar(100); // max weight
-		reply.addByte(255); // inv
-		reply.addByte(255); // spells
-		reply.addChar(1); // num of players
+		reply.addChar(player.character.weight); // weight
+		reply.addChar(player.character.max_weight); // max weight
+        
+        utils.forEach(player.character.inventory, function(item) {
+           reply.addShort(item.id);
+           reply.addInt(item.amount); 
+        });
+		reply.addByte(255);
+        
+        utils.forEach(player.character.spells, function(spell) {
+            reply.addShort(spell.id);
+            reply.addShort(spell.level);
+        });
+		reply.addByte(255);
+        
+		reply.addChar(updateCharacters.length); // num of players
 		reply.addByte(255);
 		
-		/*
-		reply.AddBreakString(character->SourceName());
-		reply.AddShort(character->PlayerID());
-		reply.AddShort(character->mapid);
-		reply.AddShort(character->x);
-		reply.AddShort(character->y);
-		reply.AddChar(character->direction);
-		reply.AddChar(6); // ?
-		reply.AddString(character->PaddedGuildTag());
-		reply.AddChar(character->level);
-		reply.AddChar(character->gender);
-		reply.AddChar(character->hairstyle);
-		reply.AddChar(character->haircolor);
-		reply.AddChar(character->race);
-		reply.AddShort(character->maxhp);
-		reply.AddShort(character->hp);
-		reply.AddShort(character->maxtp);
-		reply.AddShort(character->tp);
-		// equipment
-		character->AddPaperdollData(reply, "B000A0HSW");
-
-		reply.AddChar(character->sitting);
-		reply.AddChar(character->IsHideInvisible());
-		reply.AddByte(255);
-		*/
+        utils.forEach(updateCharacters, function(char) {
+            reply.addBreakString(char.name);
+            reply.addShort(char.playerID());
+            reply.addShort(char.map);
+            reply.addShort(char.x);
+            reply.addShort(char.y);
+            reply.addChar(char.direction);
+            reply.addChar(6); // ?
+            reply.addString(char.paddedGuildTag());
+            reply.addChar(char.level);
+            reply.addChar(char.gender);
+            reply.addChar(char.hairStyle);
+            reply.addChar(char.hairColor);
+            reply.addChar(char.race);
+            reply.addShort(char.hp);
+            reply.addShort(char.hp);
+            reply.addShort(char.tp);
+            reply.addShort(char.tp);
+            char.addPaperdollData(reply, 'B000A0HSW');
+            reply.addChar(char.sitting);
+            reply.addChar(char.hidden);
+            reply.addByte(255);
+        });
+        
+        reply.addByte(255);
 		
-		reply.addBreakString(player.character.name);
-		reply.addShort(player.id);
-		reply.addShort(player.character.map);
-		reply.addShort(player.character.x);
-		reply.addShort(player.character.y);
-		reply.addChar(player.character.direction);
-		reply.addChar(6); // ?
-		reply.addString('   ');
-		reply.addChar(player.character.level);
-		reply.addChar(player.character.gender);
-		reply.addChar(player.character.hairStyle);
-		reply.addChar(player.character.hairColor);
-		reply.addChar(player.character.race);
-		reply.addShort(player.character.hp);
-		reply.addShort(player.character.hp);
-		reply.addShort(player.character.tp);
-		reply.addShort(player.character.tp);
-		// TODO: real paperdoll data
-		// character->AddPaperdollData(reply, "B000A0HSW");*/
-		reply.addShort(0);
-		reply.addShort(0);
-		reply.addShort(0);
-		reply.addShort(0);
-		reply.addShort(0);
-		reply.addShort(0);
-		reply.addShort(0);
-		reply.addShort(0);
-		reply.addShort(0);
-		reply.addChar(player.character.sitting);
-		reply.addChar(player.character.hidden);
-		reply.addByte(255);
-		
-		reply.addByte(255);
 		player.send(reply);
 	}
 	
@@ -196,7 +184,7 @@ function welcome_handler(player, reader) {
 		
 		switch (file) {
 			case structs.fileType.map:
-				player.client.upload(structs.fileType.map, player.character.map, structs.initReply.fileMap)
+				player.client.upload(structs.fileType.map, player.character.mapid, structs.initReply.fileMap)
 				break;
 			case structs.fileType.item:
 				player.client.upload(structs.fileType.item, 1, structs.initReply.fileEIF)
