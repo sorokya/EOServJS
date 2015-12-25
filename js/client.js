@@ -6,6 +6,7 @@ var login_handler = require('./handlers/login.js');
 var account_handler = require('./handlers/account.js');
 var character_handler = require('./handlers/character.js');
 var welcome_handler = require('./handlers/welcome.js');
+var face_handler = require('./handlers/face.js');
 var utils = require('./utils.js');
 
 module.exports = function(server, socket) {
@@ -182,6 +183,9 @@ module.exports = function(server, socket) {
         break;
       case packet.family.WELCOME:
         welcome_handler(client.player, reader);
+        break;
+      case packet.family.FACE:
+        face_handler(client.player.character, reader);
         break;
       default:
         break;

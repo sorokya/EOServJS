@@ -91,6 +91,20 @@ function Map(id, world) {
         leave: function() {
             
         },
+        face: function (character, direction) {
+            character.direction = direction;
+            // character.cancelSpell();  
+            
+            var builder = packet.builder(packet.family.FACE, packet.action.PLAYER);
+            builder.addShort(character.playerID());
+            builder.addChar(direction);
+            
+            utils.forEach(this.characters, function(char) {
+                if (char !== character && character.charInRange(char)) {
+                    char.send(builder);
+                } 
+            });
+        },
         load: function() {
             var fileName = '';
             var $this = this;
