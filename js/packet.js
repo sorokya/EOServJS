@@ -22,7 +22,7 @@ var family = {
   WARP: 19,
   JUKEBOX: 21,
   PLAYERS: 22,
-  CLOTHES: 23,
+  AVATAR: 23,
   PARTY: 24,
   REFRESH: 25,
   NPC: 26,

@@ -6,31 +6,26 @@ var data = require('./data.js');
 var utils = require('./utils.js');
 var player = require('./player.js');
 var map = require('./map.js');
-
-var characters = [];
-var parties = [];
-var maps = [];
-var homes = [];
-var quests = [];
-var board = [];
-var expTable = [];
-var instrumentIds = [];
-
-var lastCharacterCount = 0;
-var adminCount = 0;
-
-for(var i = 0; i < 278; i++) {
-  maps.push(map(i));
-}
+var structs = require('./structs.js');
 
 module.exports = function(server) {
-  return {
+  var world = {
+    characters: [],
+    parties: [],
+    homes: [],
+    quests: [],
+    boards: [],
+    expTable: [],
+    instrumentIds: [],
+    lastCharacterCount: 0,
+    adminCount: 0,
+    maps: [],
     eif: null,
     enf: null,
     ecf: null,
     esf: null,
     getMap: function(id) {
-      return maps[id - 1];
+      return this.maps[id];
     },
     generatePlayerID: function() {
       var lowestFreeID = 1;
@@ -47,16 +42,25 @@ module.exports = function(server) {
       return lowestFreeID;
     },
     generateCharacterID: function() {
-      return ++lastCharacterCount;
+      return ++this.lastCharacterCount;
     },
     loginChar: function(character) {
-      characters.push(character);
+      this.characters.push(character);
       var map = this.getMap(character.mapid);
-      map.enter(character);
+      map.enter(character, structs.warpAnimation.none);
       character.login();
     },
     login: function(username) {
       return player(username);
+    },
+    logoutChar: function(character) {
+        if (this.getMap(character.mapid)) {
+            this.getMap(character.mapid).leave(character, structs.warpAnimation.none);
+        }
+        
+        this.characters.splice(this.characters.indexOf(this.characters.filter(function(char) {
+            return char.id === character.id;
+        })[0]), 1);
     },
     logout: function(username) {
       var client = server.clients.filter(function(c) {
@@ -64,6 +68,10 @@ module.exports = function(server) {
       })[0];
 
       if (client) {
+        if (client.player.character) {
+            client.player.character.logout();
+        }
+          
         client.player.online = false;
         client.close();
       }
@@ -109,4 +117,10 @@ module.exports = function(server) {
       }
     }
   };
+  
+  for(var i = 0; i < 278; i++) {
+    world.maps.push(map(i));
+  }
+  
+  return world;
 }

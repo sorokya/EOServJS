@@ -1,10 +1,11 @@
 /*
- * $this.js - loads/handles eo map files
+ * map.js - loads/handles eo map files
  */
 
 var fs = require('fs');
 var packet = require('./packet.js');
 var utils = require('./utils.js');
+var structs = require('./structs.js');
 
 function mapItem(uid, id, amount, x, y, owner, unProtectTime) {
     return {
@@ -41,7 +42,7 @@ function Map(id, world) {
         npcs: [],
         chests: [],
         items: [],
-        tile: [],
+        tiles: [],
         rid: [],
         pk: false,
         effect: 0,
@@ -51,6 +52,16 @@ function Map(id, world) {
         relogX: 0,
         relogY: 0,
         filesize: 0,
+        inBounds: function(x, y) {
+            return !(x >= this.width || y >= this.height);
+        },
+        walkable: function(x, y, npc) {
+            if (!this.inBounds(x, y) || !this.getTile(x, y).walkable(npc)) {
+                return false;
+            }  
+            
+            return true;
+        },
         enter: function(character, animation) {
             this.characters.push(character);
             character.map = this;
@@ -88,8 +99,27 @@ function Map(id, world) {
                 }
             });
         },
-        leave: function() {
+        leave: function(character, animation, silent) {
+            if (!silent) {
+                var builder = packet.builder(packet.family.AVATAR, packet.action.REMOVE);
+                builder.addShort(character.playerID());
+                
+                if (animation !== structs.warpAnimation.none) {
+                    builder.addChar(animation);
+                }
+                
+                utils.forEach(this.characters, function(char) {
+                    if (char !== character && character.charInRange(char)) {
+                        char.send(builder);
+                    } 
+                });
+            }
             
+            this.characters.splice(this.characters.indexOf(this.characters.filter(function(char) {
+                return char.id === character.id;
+            })[0]), 1);
+            
+            character.map = null;
         },
         face: function (character, direction) {
             character.direction = direction;
@@ -105,18 +135,283 @@ function Map(id, world) {
                 } 
             });
         },
+        walk: function(character, direction, admin) {
+            var seeDistance = 11;
+            var targetX = character.x;
+            var targetY = character.y;
+            
+            switch(direction) {
+                case structs.direction.UP:
+                    targetY -= 1;
+                    
+                    if (targetY > character.y) {
+                        return;
+                    }
+                    break;
+                case structs.direction.RIGHT:
+                    targetX += 1;
+                    
+                    if (targetX < character.x) {
+                        return;
+                    }
+                    break;
+                case structs.direction.DOWN:
+                    targetY += 1;
+                    
+                    if (targetY < character.y) {
+                        return;
+                    }
+                    break;
+                case structs.direction.LEFT:
+                    targetX -= 1;
+                    
+                    if (targetX > character.x) {
+                        return;
+                    }
+                    break;
+            }
+            
+            if (!this.inBounds(targetX, targetY)) {
+                return structs.walkResult.fail;
+            }
+            
+            if (!admin) {
+                if (!this.walkable(targetX, targetY)) {
+                    return structs.walkResult.fail;
+                }
+                
+                // if (this.occupied) TODO: ghosts
+            }
+            
+            // TODO: handle warps
+            
+            character.last_walk = 0; // TODO: actual last walk
+            character.attacks = 0;
+            character.cancelSpell();
+            character.direction = direction;
+            character.x = targetX;
+            character.y = targetY;
+            
+            var newx;
+            var newy;
+            var oldx;
+            var oldy;
+            
+            var newCoords = [];
+            var oldCoords = [];
+            
+            var newChars = [];
+            var oldChars = [];
+            var newNPCs = [];
+            var oldNPCs = [];
+            var newItems = [];
+            
+            switch(direction) {
+                case structs.direction.UP:
+                    for (var i = -seeDistance; i < seeDistance; i++) {
+                        newy = character.y - seeDistance + Math.abs(i);
+                        newx = character.x + i;
+                        oldy = character.y + seeDistance + 1 - Math.abs(i);
+                        oldx = character.x + i;
+                        
+                        newCoords.push({
+                            x: newx,
+                            y: newy
+                        });
+                        
+                        oldCoords.push({
+                            x: oldx,
+                            y: oldy
+                        });
+                    }
+                    break;
+                case structs.direction.RIGHT:
+                    for (var i = -seeDistance; i < seeDistance; i++) {
+                        newy = character.y + i;
+                        newx = character.x + seeDistance - Math.abs(i);
+                        oldy = character.y + i;
+                        oldx = character.x - seeDistance - 1 + Math.abs(i);
+                        
+                        newCoords.push({
+                            x: newx,
+                            y: newy
+                        });
+                        
+                        oldCoords.push({
+                            x: oldx,
+                            y: oldy
+                        });
+                    }
+                    break;
+                case structs.direction.DOWN:
+                    for (var i = -seeDistance; i < seeDistance; i++) {
+                        newy = character.y + seeDistance - Math.abs(i);
+                        newx = character.x + i;
+                        oldy = character.y - seeDistance - 1 + Math.abs(i);
+                        oldx = character.x + i;
+                        
+                        newCoords.push({
+                            x: newx,
+                            y: newy
+                        });
+                        
+                        oldCoords.push({
+                            x: oldx,
+                            y: oldy
+                        });
+                    }
+                    break;
+                case structs.direction.LEFT:
+                    for (var i = -seeDistance; i < seeDistance; i++) {
+                        newy = character.y + i;
+                        newx = character.x - seeDistance + Math.abs(i);
+                        oldy = character.y + i;
+                        oldx = character.x + seeDistance + 1 - Math.abs(i);
+                        
+                        newCoords.push({
+                            x: newx,
+                            y: newy
+                        });
+                        
+                        oldCoords.push({
+                            x: oldx,
+                            y: oldy
+                        });
+                    }
+                    break;
+            }
+            
+            utils.forEach(this.characters, function(char) {
+                if (char !== character) {
+                    for (var i = 0; i < oldCoords.length; i++) {
+                        if (char.x === oldCoords[i].x && char.y === oldCoords.y) {
+                            oldChars.push(char);
+                        } else if (char.x === newCoords[i].x && char.y === newCoords[i].y) {
+                            newChars.push(char);
+                        }
+                    }
+                } 
+            });
+            
+            utils.forEach(this.npcs, function(npc) {
+                
+            });
+            
+            utils.forEach(this.items, function(item) {
+                
+            });
+            
+            var builder = packet.builder(packet.family.AVATAR, packet.action.REMOVE);
+            builder.addShort(character.playerID());
+            
+            utils.forEach(oldChars, function(char) {
+                var rBuilder = packet.builder(packet.family.AVATAR, packet.action.REMOVE);
+                rBuilder.addShort(char.playerID());
+                
+                char.send(builder);
+                character.send(rBuilder); 
+            });
+            
+            builder = packet.builder(packet.family.PLAYERS, packet.action.AGREE);
+            builder.addByte(255);
+            builder.addBreakString(character.name);
+            builder.addShort(character.playerID());
+            builder.addShort(character.mapid);
+            builder.addShort(character.x);
+            builder.addShort(character.y);
+            builder.addChar(character.direction);
+            builder.addChar(6); // ?
+            builder.addString(character.paddedGuildTag());
+            builder.addChar(character.level);
+            builder.addChar(character.gender);
+            builder.addChar(character.hairStyle);
+            builder.addChar(character.hairColor);
+            builder.addChar(character.race);
+            builder.addShort(character.max_hp);
+            builder.addShort(character.hp);
+            builder.addShort(character.max_tp);
+            builder.addShort(character.tp);
+            character.addPaperdollData(builder, 'B000A0HSW');
+            builder.addChar(character.sitting);
+            builder.addChar(character.hidden);
+            builder.addByte(255);
+            builder.addChar(1); // 0 = NPC, 1 = player
+            
+            utils.forEach(newChars, function(char) {
+                 var rBuilder = packet.builder(packet.family.PLAYERS, packet.action.AGREE);
+                 rBuilder.addByte(255);
+                 rBuilder.addBreakString(char.name);
+                 rBuilder.addShort(char.playerID());
+                 rBuilder.addShort(char.mapid);
+                 rBuilder.addShort(char.x);
+                 rBuilder.addShort(char.y);
+                 rBuilder.addChar(char.direction);
+                 rBuilder.addChar(6); // ?
+                 rBuilder.addString(char.paddedGuildTag());
+                 rBuilder.addChar(char.level);
+                 rBuilder.addChar(char.gender);
+                 rBuilder.addChar(char.hairStyle);
+                 rBuilder.addChar(char.hairColor);
+                 rBuilder.addChar(char.race);
+                 rBuilder.addShort(char.max_hp);
+                 rBuilder.addShort(char.hp);    
+                 rBuilder.addShort(char.max_tp);
+                 rBuilder.addShort(char.tp);
+                 char.addPaperdollData(rBuilder, 'B000A0HSW');
+                 rBuilder.addChar(char.sitting);
+                 rBuilder.addChar(char.hidden);
+                 rBuilder.addByte(255);
+                 rBuilder.addChar(1); // 0 = NPC, 1 = player
+                 
+                 char.send(builder);
+                 character.send(rBuilder);
+            });
+            
+            builder = packet.builder(packet.family.WALK, packet.action.PLAYER);
+            builder.addShort(character.playerID());
+            builder.addChar(direction);
+            builder.addChar(character.x);
+            builder.addChar(character.y);
+            
+            utils.forEach(this.characters, function(char) {
+                if (char !== character && character.charInRange(char)) {
+                    char.send(builder);
+                } 
+            });
+            
+            builder = packet.builder(packet.family.WALK, packet.action.REPLY);
+            builder.addByte(255);
+            builder.addByte(255);
+            
+            utils.forEach(newItems, function(item) {
+                
+            });
+            
+            character.send(builder);
+            
+            builder = packet.builder(packet.family.APPEAR, packet.action.REPLY);
+            utils.forEach(newNPCs, function(npc) {
+                
+            });
+            
+            utils.forEach(oldNPCs, function(npc) {
+                // TODO: remove from view
+            });
+            
+            // TODO: check quests rules
+            
+            // TODO: spike damage
+            
+            return structs.walkResult.ok;
+        },
+        getTile: function(x, y) {
+            return this.tiles[y * this.width + x];
+        },
+        setTile: function(x, y, tile) {
+            this.tiles[y * this.width + x] = tile;
+        },
         load: function() {
             var fileName = '';
-            var $this = this;
-            $this.tiles = [];
-
-            function getTile(x, y) {
-                return $this.tiles[y * $this.width + x];
-            }
-
-            function setTile(x, y, tile) {
-                $this.tiles[y * $this.width + x] = tile;
-            }
 
             function readBuf(buf, length) {
                 var ret = buf.slice(buf.curPos, buf.curPos + length);
@@ -124,11 +419,11 @@ function Map(id, world) {
                 return ret;
             }
 
-            for (var i = 0; i <  5 - $this.id.toString().length; i++) {
+            for (var i = 0; i <  5 - this.id.toString().length; i++) {
                 fileName += '0';
             }
 
-            fileName += $this.id + '.emf';
+            fileName += this.id + '.emf';
 
             var stats;	
             try {
@@ -137,9 +432,9 @@ function Map(id, world) {
                     var fData = packet.bufferToStr(fs.readFileSync('./data/maps/' + fileName)).split('');
                     fData.curPos = 0x03;
                     
-                    $this.rid = readBuf(fData, 4);
-                    for(var i = 0; i < $this.rid.length; i++) {
-                        $this.rid[i] = $this.rid[i].charCodeAt();
+                    this.rid = readBuf(fData, 4);
+                    for(var i = 0; i < this.rid.length; i++) {
+                        this.rid[i] = this.rid[i].charCodeAt();
                     }
                     
                     var buf;
@@ -148,25 +443,55 @@ function Map(id, world) {
                     
                     fData.curPos = 0x1F;
                     buf = readBuf(fData, 2);
-                    $this.pk = packet.packEOInt(buf[0].charCodeAt()) === 3;
-                    $this.effect = packet.packEOInt(buf[1].charCodeAt());
+                    this.pk = packet.packEOInt(buf[0].charCodeAt()) === 3;
+                    this.effect = packet.packEOInt(buf[1].charCodeAt());
                     
                     fData.curPos = 0x25;
                     buf = readBuf(fData, 2);
-                    $this.width = packet.packEOInt(buf[0].charCodeAt()) + 1;
-                    $this.height = packet.packEOInt(buf[1].charCodeAt()) + 1;
+                    this.width = packet.packEOInt(buf[0].charCodeAt()) + 1;
+                    this.height = packet.packEOInt(buf[1].charCodeAt()) + 1;
                     
-                    for(var i = 0; i < $this.width * $this.height; i++) {
-                        $this.tiles.push({
-                            tilespec: -1
+                    for(var i = 0; i < this.width * this.height; i++) {
+                        this.tiles.push({
+                            tilespec: -1,
+                            warp: {},
+                            walkable: function(npc) {
+                                switch(this.tilespec) {
+                                    case structs.tileSpec.wall:
+                                    case structs.tileSpec.chairDown:
+                                    case structs.tileSpec.chairLeft:
+                                    case structs.tileSpec.chairRight:
+                                    case structs.tileSpec.chairUp:
+                                    case structs.tileSpec.chairDownRight:
+                                    case structs.tileSpec.chairUpLeft:
+                                    case structs.tileSpec.chairAll:
+                                    case structs.tileSpec.chest:
+                                    case structs.tileSpec.bankVault:
+                                    case structs.tileSpec.mapEdge:
+                                    case structs.tileSpec.board1:
+                                    case structs.tileSpec.board2:
+                                    case structs.tileSpec.board3:
+                                    case structs.tileSpec.board4:
+                                    case structs.tileSpec.board5:
+                                    case structs.tileSpec.board6:
+                                    case structs.tileSpec.board7:
+                                    case structs.tileSpec.board8:
+                                    case structs.tileSpec.jukebox:
+                                        return false;
+                                    case structs.tileSpec.npcBoundary:
+                                        return !npc;
+                                    default:
+                                        return true;
+                                }
+                            }
                         });
                     }
                     
                     fData.curPos = 0x2A;
                     buf = readBuf(fData, 3);
-                    $this.scroll = packet.packEOInt(buf[0].charCodeAt());
-                    $this.relogX = packet.packEOInt(buf[1].charCodeAt());
-                    $this.relogY = packet.packEOInt(buf[2].charCodeAt());
+                    this.scroll = packet.packEOInt(buf[0].charCodeAt());
+                    this.relogX = packet.packEOInt(buf[1].charCodeAt());
+                    this.relogY = packet.packEOInt(buf[2].charCodeAt());
                     
                     fData.curPos = 0x2E;
                     buf = readBuf(fData, 1);
@@ -190,6 +515,10 @@ function Map(id, world) {
                     buf = readBuf(fData, 1);
                     outersize = packet.packEOInt(buf[0].charCodeAt());
                     
+                    if (this.id === 192) {
+                        var foo = 'bar';
+                    }
+                    
                     for (var i = 0; i < outersize; i++) {
                         buf = readBuf(fData, 2);
                         var yloc = packet.packEOInt(buf[0].charCodeAt());
@@ -198,8 +527,11 @@ function Map(id, world) {
                         for (var ii = 0; ii < innersize; ii++) {
                             buf = readBuf(fData, 2);
                             var xloc = packet.packEOInt(buf[0].charCodeAt());
-                            var spec = packet.packEOInt(buf[1].charCodeAt());
-                            setTile(xloc, yloc, { tilespec: spec });
+                            var spec = packet.packEOInt(buf[1].charCodeAt())
+                            
+                            var tile = this.getTile(xloc, yloc);
+                            tile.tilespec = spec;
+                            this.setTile(xloc, yloc, tile);
                         }
                     }
                     
@@ -221,9 +553,9 @@ function Map(id, world) {
                             newWarp.levelReq = packet.packEOInt(buf[5].charCodeAt());
                             newWarp.spec = packet.packEOInt(buf[6].charCodeAt(), buf[7].charCodeAt());
                             
-                            var tile = getTile(xloc, yloc);
+                            var tile = this.getTile(xloc, yloc);
                             tile.warp = newWarp;
-                            setTile(xloc, yloc, tile);
+                            this.setTile(xloc, yloc, tile);
                         }
                     }
                     
@@ -265,16 +597,16 @@ function Map(id, world) {
                         // TODO: chests
                     }
                     
-                    $this.filesize = fData.length;
+                    this.filesize = fData.length;
                 }
             } catch (e) {
-                console.log('error loading map ' + $this.id);
+                console.log('error loading map ' + this.id);
             }
         }
     };
-	
-	
-	
+    
+    map.load();
+    
 	return map;
 }
 

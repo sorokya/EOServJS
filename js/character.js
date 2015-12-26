@@ -1,5 +1,6 @@
 var utils = require('./utils.js');
 var structs = require('./structs.js');
+var packet = require('./packet.js');
 
 function Character(data, world, user) {
     function characterItem(id, amount) {
@@ -19,8 +20,12 @@ function Character(data, world, user) {
     function itemSerialize(list) {
         var serialized = '';
         
-        utils.forEach(list, function(item) {
-            serialized += item.id + ',' + item.amount + ';';
+        utils.forEach(list, function(item, i) {
+            serialized += item.id + ',' + item.amount;
+            
+            if (i !== list.length - 1) {
+                serialized += ';';
+            }
         });
         
         return serialized;
@@ -48,13 +53,7 @@ function Character(data, world, user) {
     }
     
     function dollSerialize(list) {
-        var serialized = '';
-        
-        utils.forEach(list, function(item) {
-           serialized += item + ','; 
-        });
-        
-        return serialized;
+        return list.join(',');
     }
     
     function dollUnserialize(serialized) {
@@ -85,8 +84,12 @@ function Character(data, world, user) {
     function spellSerialize(list) {
         var serialized = '';
         
-        utils.forEach(list, function(spell) {
-           serialized += spell.id + ',' + spell.level + ';'; 
+        utils.forEach(list, function(spell, i) {
+           serialized += spell.id + ',' + spell.level;
+           
+           if (i !== list.length - 1) {
+               serialized += ';';
+           }
         });
         
         return serialized;
@@ -240,6 +243,89 @@ function Character(data, world, user) {
         unregister_npc: [],
         quests: [],
         quests_inactive: [],
+        
+        cancelSpell: function() {
+            
+        },
+        
+        refresh: function() {
+            var $this = this;
+            var updateCharacters = [];
+            var updateNPCs = [];
+            var updateItems = [];
+            
+            utils.forEach($this.map.characters, function(char) {
+               if ($this.charInRange(char)) {
+                   updateCharacters.push(char);
+               } 
+            });
+            
+            utils.forEach($this.map.npcs, function(npc) {
+                
+            });
+            
+            utils.forEach($this.map.items, function(item) {
+                
+            });
+            
+            var builder = packet.builder(packet.family.REFRESH, packet.action.REPLY);
+            builder.addChar(updateCharacters.length);
+            builder.addByte(255);
+            
+            utils.forEach(updateCharacters, function(char) {
+               builder.addBreakString(char.name);
+               builder.addShort(char.playerID());
+               builder.addShort(char.mapid);
+               builder.addShort(char.x); 
+               builder.addShort(char.y);
+               builder.addChar(char.direction);
+               builder.addChar(6);
+               builder.addString(char.paddedGuildTag());
+               builder.addChar(char.level);
+               builder.addChar(char.gender);
+               builder.addChar(char.hairStyle);
+               builder.addChar(char.hairColor);
+               builder.addChar(char.race);
+               builder.addShort(char.max_hp);
+               builder.addShort(char.hp);
+               builder.addShort(char.max_tp);
+               builder.addShort(char.tp);
+               
+               char.addPaperdollData(builder, 'B000A0HSW');
+               
+               builder.addChar(char.sitting);
+               builder.addChar(char.hidden);
+               builder.addByte(255);
+            });
+            
+            utils.forEach(updateNPCs, function(npc) {
+                
+            });
+            
+            builder.addByte(255);
+            
+            utils.forEach(updateItems, function(item) {
+                
+            });
+            
+            $this.send(builder);
+        },
+        
+        walk: function(direction) {
+            return this.map.walk(this, direction);
+        },
+        
+        walkAdmin: function(direction) {
+            return this.map.walk(this, direction, true);
+        },
+        
+        logout: function() {
+            // TODO: cancel spells, trades, parties. leave arena. unregister npcs
+            
+            this.online = false;
+            this.save();
+            this.world.logoutChar(this);
+        },
         
         login: function() {
             
@@ -426,7 +512,7 @@ function Character(data, world, user) {
                 statpoints: $this.statpoints,
                 skillpoints: $this.skillpoints,
                 karma: $this.karma,
-                sitting: $this.sittig,
+                sitting: $this.sitting,
                 hidden: $this.hidden,
                 nointeract: $this.nointeract,
                 bankmax: $this.bankmax,

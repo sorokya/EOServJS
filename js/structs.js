@@ -232,5 +232,52 @@ module.exports = {
       twoByTwo: 5,
       twoByThree: 6,
       twoByFour: 7
+  },
+  
+  walkResult: {
+      fail: 0,
+      ok: 1,
+      warped: 2
+  },
+  
+  tileSpec: {
+      none: -1,
+      wall: 0,
+      chairDown: 1,
+      chairLeft: 2,
+      chairRight: 3,
+      chairUp: 4,
+      chairDownRight: 5,
+      chairUpLeft: 6,
+      chairAll: 7,
+      door: 8,
+      chest: 9,
+      unknown1: 10,
+      unknown2: 11,
+      unknown3: 12,
+      unknown4: 13,
+      unknown5: 14,
+      unknown6: 15,
+      bankVault: 16,
+      npcBoundary: 17,
+      mapEdge: 18,
+      fakeWall: 19,
+      board1: 20,
+      board2: 21,
+      board3: 22,
+      board4: 23,
+      board5: 24,
+      board6: 25,
+      board7: 26,
+      board8: 27,
+      jukebox: 28,
+      jump: 29,
+      water: 30,
+      unknown7: 31,
+      arena: 32,
+      ambientSource: 33,
+      spikes1: 34,
+      spikes2: 35,
+      spikes3: 36
   }
 };
