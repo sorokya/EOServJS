@@ -248,6 +248,87 @@ function Character(data, world, user) {
             
         },
         
+        addItem: function(id, amount) {
+            if (amount <= 0) {
+                return false;
+            }
+            
+            if (id <= 0 || id >= this.world.eif.data.length) {
+                return false;
+            }
+            
+            utils.forEach(this.inventory, function(item, i) {
+                if (item === id) {
+                    if (item.amount  + amount < 0) {
+                        return;
+                    }
+                    
+                    this.inventory[i].amount += amount;
+                    this.calculateStats();
+                    return true;
+                }
+            });
+            
+            var newItem = {};
+            newItem.id = id;
+            newItem.amount = amount;
+            
+            this.inventory.push(newItem);
+            this.calculateStats();
+            return true;
+        },
+        
+        warp: function(map, x, y, animation) {
+            if (map <= 0 || map > this.world.maps.length) {
+                return;
+            }
+            
+            var builder = packet.builder(packet.family.WARP, packet.action.REQUEST);
+            if (this.mapid === map && !this.nowhere) {
+                builder.addChar(structs.warpType.local);
+                builder.addShort(map);
+                builder.addChar(x);
+                builder.addChar(y);
+            } else {
+                builder.addChar(structs.warpType.switch);
+                builder.addShort(map);
+                builder.addByte(this.world.getMap(map).rid[0]);
+                builder.addByte(this.world.getMap(map).rid[1]);
+                builder.addByte(this.world.getMap(map).rid[2]);
+                builder.addByte(this.world.getMap(map).rid[3]);
+                builder.addThree(this.world.getMap(map).filesize);
+                builder.addChar(0); // ?
+                builder.addChar(0); // ?
+            }
+            
+            if (this.map && this.map.exists) {
+                this.map.leave(this, animation);
+            }
+            
+            this.map = this.world.getMap(map);
+            this.mapid = map;
+            this.x = x;
+            this.y = y;
+            this.sitting = structs.sitState.stand;
+            
+            this.npc = 0;
+            this.npc_type = structs.ENFType.NPC;
+            this.board = 0;
+            this.jukebox_open = false;
+            this.guild_join = '';
+            this.guild_invite = '';
+            
+            if (this.trading) {
+                // TODO: cancel trade
+            }
+            
+            this.warp_anim = animation;
+            this.nowhere = false;
+            
+            this.map.enter(this, animation);
+            this.send(builder);
+        },
+        
         refresh: function() {
             var $this = this;
             var updateCharacters = [];
@@ -309,6 +390,13 @@ function Character(data, world, user) {
             });
             
             $this.send(builder);
+        },
+        
+        msg: function(from, message) {
+            var builder = packet.builder(packet.family.TALK, packet.action.TELL);
+            builder.addBreakString(from.name);
+            builder.addBreakString(message);
+            this.send(builder);
         },
         
         attack: function(direction) {

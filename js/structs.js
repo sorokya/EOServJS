@@ -279,5 +279,10 @@ module.exports = {
       spikes1: 34,
       spikes2: 35,
       spikes3: 36
+  },
+  
+  warpType: {
+      local: 1,
+      switch: 2
   }
 };

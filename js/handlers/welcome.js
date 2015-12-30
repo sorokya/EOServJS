@@ -163,9 +163,9 @@ function welcome_handler(player, reader) {
             reply.addChar(char.hairStyle);
             reply.addChar(char.hairColor);
             reply.addChar(char.race);
+            reply.addShort(char.max_hp);
             reply.addShort(char.hp);
-            reply.addShort(char.hp);
-            reply.addShort(char.tp);
+            reply.addShort(char.map_tp);
             reply.addShort(char.tp);
             char.addPaperdollData(reply, 'B000A0HSW');
             reply.addChar(char.sitting);

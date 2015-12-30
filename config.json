@@ -6,6 +6,7 @@
     "enforceWeight": true,
     
     "limitAttack": 251,
+    "chatLength": 128,
     
     "EIF": "./data/pub/dat001.eif",
     "ENF": "./data/pub/dtn001.enf",

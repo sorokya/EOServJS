@@ -169,6 +169,7 @@ var EIF = function () {
   }
 
   return {
+    data: data,
     rid: rid,
     len: len,
     get: function (id) {
@@ -244,6 +245,7 @@ var ENF = function () {
   }
 
   return {
+    data: data,
     rid: rid,
     len: len,
     get: function (id) {
@@ -325,6 +327,7 @@ var ESF = function () {
   }
 
   return {
+    data: data,
     rid: rid,
     len: len,
     get: function (id) {
@@ -407,6 +410,7 @@ var ECF = function () {
   }
 
   return {
+    data: data,
     rid: rid,
     len: len,
     get: function (id) {

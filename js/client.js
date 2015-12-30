@@ -12,6 +12,8 @@ var emote_handler = require('./handlers/emote.js');
 var sit_handler = require('./handlers/sit.js');
 var chair_handler = require('./handlers/chair.js');
 var attack_handler = require('./handlers/attack.js');
+var talk_handler = require('./handlers/talk.js');
+var warp_handler = require('./handlers/warp.js');
 var utils = require('./utils.js');
 
 module.exports = function(server, socket) {
@@ -206,6 +208,11 @@ module.exports = function(server, socket) {
         break;
       case packet.family.ATTACK:
         attack_handler(client.player.character, reader);
+      case packet.family.TALK:
+        talk_handler(client.player.character, reader);
+        break;
+      case packet.family.WARP:
+        warp_handler(client.player.character, reader);
       default:
         break;
     }

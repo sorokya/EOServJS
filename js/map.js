@@ -122,6 +122,17 @@ function Map(id, world) {
             
             character.map = null;
         },
+        msg: function(character, message, echo) {
+            var builder = packet.builder(packet.family.TALK, packet.action.PLAYER);
+            builder.addShort(character.playerID());
+            builder.addString(message);
+            
+            utils.forEach(this.characters, function(char) {
+                if (char !== character && character.charInRange(char)) {
+                    char.send(builder);
+                }
+            });
+        },
         attack: function(character, direction) {
             character.direction = direction;
             character.attacks++;
@@ -663,6 +674,7 @@ function Map(id, world) {
                     }
                     
                     this.filesize = fData.length;
+                    this.exists = true;
                 }
             } catch (e) {
                 console.log('error loading map ' + this.id);

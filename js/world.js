@@ -7,6 +7,7 @@ var utils = require('./utils.js');
 var player = require('./player.js');
 var map = require('./map.js');
 var structs = require('./structs.js');
+var packet = require('./packet.js');
 
 module.exports = function(server) {
   var world = {
@@ -24,6 +25,48 @@ module.exports = function(server) {
     enf: null,
     ecf: null,
     esf: null,
+    serverMsg: function(message) {
+        var builder = packet.builder(packet.family.TALK, packet.action.SERVER);
+        builder.addBreakString(message);
+        
+        utils.forEach(this.characters, function(char) {
+            char.send(builder);
+        });
+    },
+    announceMsg: function(from, message, echo) {
+        var fromStr = from ? from.name : 'server';
+        var builder = packet.builder(packet.family.TALK, packet.action.ANNOUNCE);
+        builder.addBreakString(fromStr);
+        builder.addBreakString(message);
+        
+        utils.forEach(this.characters, function(char) {
+            if (char !== from || echo) {
+                char.send(builder);
+            }
+        });
+    },
+    msg: function(from, message, echo) {
+        var fromStr = from ? from.name : 'server';
+        
+        var builder = packet.builder(packet.family.TALK, packet.action.MSG);
+        builder.addBreakString(fromStr);
+        builder.addBreakString(message);
+        
+        utils.forEach(this.characters, function(char) {
+            if (char !== from || echo) {
+                char.send(builder);
+            }
+        });
+    },
+    getCharacter: function(name) {
+        var found = this.characters.filter(function(char){
+            return char.name === name;
+        });
+        
+        if (found && found.length) {
+            return found[0];
+        }
+    },
     getMap: function(id) {
       return this.maps[id];
     },
