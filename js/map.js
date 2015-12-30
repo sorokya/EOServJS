@@ -2,6 +2,7 @@
  * map.js - loads/handles eo map files
  */
 
+var config = require('./config.js');
 var fs = require('fs');
 var packet = require('./packet.js');
 var utils = require('./utils.js');
@@ -111,7 +112,7 @@ function Map(id, world) {
                 utils.forEach(this.characters, function(char) {
                     if (char !== character && character.charInRange(char)) {
                         char.send(builder);
-                    } 
+                    }
                 });
             }
             
@@ -120,6 +121,70 @@ function Map(id, world) {
             })[0]), 1);
             
             character.map = null;
+        },
+        attack: function(character, direction) {
+            character.direction = direction;
+            character.attacks++;
+            character.cancelSpell();
+            
+            // TODO: arena
+            
+            // TODO: instrument / pk
+            
+            var builder = packet.builder(packet.family.ATTACK, packet.action.PLAYER);
+            builder.addShort(character.playerID());
+            builder.addChar(direction);
+            
+            utils.forEach(this.characters, function(char) {
+                if (char !== character && character.charInRange(char)) {
+                    char.send(builder);
+                }
+            });
+            
+            // TODO: actually damage shit
+        },
+        sit: function(character, state) {
+            character.sitting = state;
+            character.cancelSpell();
+            
+            var builder = packet.builder(state === structs.sitState.chair ? packet.family.CHAIR : packet.family.SIT, packet.action.PLAYER);
+            builder.addShort(character.playerID());
+            builder.addChar(character.x);
+            builder.addChar(character.y);
+            builder.addChar(character.direction);
+            builder.addChar(0);
+            
+            utils.forEach(this.characters, function(char) {
+                if (char !== character && character.charInRange(char)) {
+                    char.send(builder);
+                }
+            });
+        },
+        stand: function(character) {
+            character.sitting = structs.sitState.stand;
+            character.cancelSpell();
+            
+            var builder = packet.builder(packet.family.SIT, packet.action.REMOVE);
+            builder.addShort(character.playerID());
+            builder.addChar(character.x);
+            builder.addChar(character.y);
+            
+            utils.forEach(this.characters, function(char) {
+                if (char !== character && character.charInRange(char)) {
+                    char.send(builder);
+                }
+            });
+        },
+        emote: function(character, emote, echo) {
+            var builder = packet.builder(packet.family.EMOTE, packet.action.PLAYER);
+            builder.addShort(character.playerID());
+            builder.addChar(emote);
+            
+            utils.forEach(this.characters, function(char) {
+                if (echo || char !== character && character.charInRange(char)) {
+                    char.send(builder);
+                } 
+            });
         },
         face: function (character, direction) {
             character.direction = direction;
@@ -427,9 +492,9 @@ function Map(id, world) {
 
             var stats;	
             try {
-                stats = fs.statSync('./data/maps/' + fileName);
+                stats = fs.statSync(config.MapDir + '/' + fileName);
                 if (stats) {
-                    var fData = packet.bufferToStr(fs.readFileSync('./data/maps/' + fileName)).split('');
+                    var fData = packet.bufferToStr(fs.readFileSync(config.MapDir + '/' + fileName)).split('');
                     fData.curPos = 0x03;
                     
                     this.rid = readBuf(fData, 4);

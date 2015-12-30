@@ -1,0 +1,29 @@
+{
+    "host": "0.0.0.0",
+    "port": 8078,
+    
+    "enforceTimestamps": true,
+    "enforceWeight": true,
+    
+    "limitAttack": 251,
+    
+    "EIF": "./data/pub/dat001.eif",
+    "ENF": "./data/pub/dtn001.enf",
+    "ESF": "./data/pub/dsl001.esf",
+    "ECF": "./data/pub/dat001.ecf",
+    
+    "NewsFile": "./data/news.txt",
+    
+    "DropsFile": "./data/drops.ini",
+    "ShopsFile": "./data/shops.ini",
+    "ArenasFile": "./data/arenas.ini",
+    "FormulasFile": "./data/formulas.ini",
+    "HomeFile": "./data/home.ini",
+    "SkillsFile": "./data/skillmaster.ini",
+
+    "MapDir": "./data/maps",
+    "Maps": 278,
+    
+    "QuestDir": "./data/quests",
+    "Quests": 0
+}

@@ -2,25 +2,11 @@
  * eodata.js - loads/stores pub file data
  */
 
+var config = require('./config.js');
 var fs = require('fs');
 var utils = require('./utils.js');
 var packet = require('./packet.js');
 var processor = packet.processor();
-
-function checkDirectory(path) {
-  fs.stat('./' + path, function(err, stats) {
-    if(err) {
-      console.log('Error checking directory: ' + path);
-    }
-
-    if(!stats) {
-      fs.mkdir('./' + path);
-    }
-  });
-}
-
-checkDirectory('data');
-checkDirectory('data/pub');
 
 var EIF = function () {
   var data = [];
@@ -28,9 +14,9 @@ var EIF = function () {
   var len = [];
 
   try {
-    var stats = fs.statSync('./data/pub/dat001.eif');
+    var stats = fs.statSync(config.EIF);
     if (stats) {
-      var fData = packet.bufferToStr(fs.readFileSync('./data/pub/dat001.eif')).split('');
+      var fData = packet.bufferToStr(fs.readFileSync(config.EIF)).split('');
       fData.splice(0, 3);
 
       rid = fData.splice(0, 4);
@@ -201,9 +187,9 @@ var ENF = function () {
   var len = [];
 
   try {
-    var stats = fs.statSync('./data/pub/dtn001.enf');
+    var stats = fs.statSync(config.ENF);
     if (stats) {
-      var fData = packet.bufferToStr(fs.readFileSync('./data/pub/dtn001.enf')).split('');
+      var fData = packet.bufferToStr(fs.readFileSync(config.ENF)).split('');
       fData.splice(0, 3);
 
       rid = fData.splice(0, 4);
@@ -276,9 +262,9 @@ var ESF = function () {
   var len = [];
 
   try {
-    var stats = fs.statSync('./data/pub/dsl001.esf');
+    var stats = fs.statSync(config.ESF);
     if (stats) {
-      var fData = packet.bufferToStr(fs.readFileSync('./data/pub/dsl001.esf')).split('');
+      var fData = packet.bufferToStr(fs.readFileSync(config.ESF)).split('');
       fData.splice(0, 3);
 
       rid = fData.splice(0, 4);
@@ -357,9 +343,9 @@ var ECF = function () {
   var len = [];
 
   try {
-    var stats = fs.statSync('./data/pub/dat001.ecf');
+    var stats = fs.statSync(config.ECF);
     if (stats) {
-      var fData = packet.bufferToStr(fs.readFileSync('./data/pub/dat001.ecf')).split('');
+      var fData = packet.bufferToStr(fs.readFileSync(config.ECF)).split('');
       fData.splice(0, 3);
 
       rid = fData.splice(0, 4);

@@ -238,7 +238,7 @@ function Character(data, world, user) {
         muted_until: 0,
         guild_join: '',
         guild_invite: '',
-        timestamp: null,
+        timestamp: 0,
         chat_log: [],
         unregister_npc: [],
         quests: [],
@@ -309,6 +309,22 @@ function Character(data, world, user) {
             });
             
             $this.send(builder);
+        },
+        
+        attack: function(direction) {
+            this.map.attack(this, direction);
+        },
+        
+        sit: function(state) {
+            this.map.sit(this, state);
+        },
+        
+        stand: function() {
+            this.map.stand(this);
+        },
+        
+        emote: function(emote, echo) {
+            this.map.emote(this, emote, echo)  
         },
         
         walk: function(direction) {

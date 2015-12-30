@@ -1,3 +1,5 @@
+"use strict";
+
 var MAX1 = 253;
 var MAX2 = 64009;
 var MAX3 = 16194277;
@@ -512,6 +514,20 @@ function packetReader(d) {
 module.exports = {
   family: family,
   action: action,
+  getFamilyName: function(id) {
+    for(let i in family) {
+        if (family[i] === id) {
+            return i;
+        }
+    }
+  },
+  getActionName: function(id) {
+    for(let i in action) {
+        if (action[i] === id) {
+            return i;
+        }
+    }
+  },
   reader: packetReader,
   builder: packetBuilder,
   processor: processor,

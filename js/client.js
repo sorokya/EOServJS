@@ -8,6 +8,10 @@ var character_handler = require('./handlers/character.js');
 var welcome_handler = require('./handlers/welcome.js');
 var face_handler = require('./handlers/face.js');
 var walk_handler = require('./handlers/walk.js');
+var emote_handler = require('./handlers/emote.js');
+var sit_handler = require('./handlers/sit.js');
+var chair_handler = require('./handlers/chair.js');
+var attack_handler = require('./handlers/attack.js');
 var utils = require('./utils.js');
 
 module.exports = function(server, socket) {
@@ -191,6 +195,17 @@ module.exports = function(server, socket) {
       case packet.family.WALK:
         walk_handler(client.player.character, reader);
         break;
+      case packet.family.EMOTE:
+        emote_handler(client.player.character, reader);
+        break;
+      case packet.family.SIT:
+        sit_handler(client.player.character, reader);
+        break;
+      case packet.family.CHAIR:
+        chair_handler(client.player.character, reader);
+        break;
+      case packet.family.ATTACK:
+        attack_handler(client.player.character, reader);
       default:
         break;
     }

@@ -3,18 +3,25 @@
  * handles walk packet
  */
 
+var config = require('../config.js');
 var structs = require('../structs.js');
 var packet = require('../packet.js');
 
 function walk_handler(character, reader) {
     function walkCommon(admin) {
         var direction = reader.getChar();
-        var timeStamp = reader.getThree();
+        var timestamp = reader.getThree();
         var x = reader.getChar();
         var y = reader.getChar();
         var walkResult = structs.walkResult.fail;
+
+        if (config.enforceTimestamps) {
+            if (timestamp - character.timestamp < 36) {
+                return;
+            }
+        }
         
-        // TODO: enforce timestamps
+        character.timestamp = timestamp;
         
         if (character.sitting !== structs.sitState.stand) {
             return;

@@ -1,11 +1,10 @@
 var net = require('net');
+var config = require('./config.js');
 var client = require('./client.js');
 var world = require('./world.js');
 var eodata = require('./eodata.js');
 var utils = require('./utils.js');
 
-var bind = '0.0.0.0';
-var port = 8078;
 var server;
 var clients = [];
 
@@ -22,9 +21,9 @@ var eoserver = {
     this.world.esf = this.eodata.ESF;
 
     server = net.createServer();
-    server.listen(port, bind);
+    server.listen(config.port, config.host);
 
-    console.log('Server Listening on ' + bind + ':' + port);
+    console.log('Server Listening on ' + config.host + ':' + config.port);
 
     server.on('connection', function(socket) {
       console.log('New connection from ' + socket.remoteAddress);
