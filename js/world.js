@@ -2,6 +2,8 @@
  * world.js - handles all maps and charcters on the server
  */
 
+'use strict';
+
 var data = require('./data.js');
 var utils = require('./utils.js');
 var player = require('./player.js');
@@ -14,7 +16,7 @@ module.exports = function(server) {
   var world = {
     characters: [],
     parties: [],
-    homes: [],
+    homes: null,
     quests: [],
     boards: [],
     expTable: [],
@@ -26,6 +28,34 @@ module.exports = function(server) {
     enf: null,
     ecf: null,
     esf: null,
+    getHome: function(character) {
+        var home;
+        
+        for (let i = 0; i < this.homes.length; i++) {
+            if (this.homes[i].id === character.home) {
+                return this.homes[i];
+            }
+        }
+        
+        var currentHomeLevel = -2;
+        utils.forEach(this.homes, function(h) {
+            if (typeof h.level !== 'undefined' && h.level <= character.level && h.level > currentHomeLevel) {
+                home = h;
+                currentHomeLevel = h.level;
+            }
+        });
+        
+        return home;
+    },
+    getHomeID: function(id) {
+        for (let i = 0; i < this.homes.length; i++) {
+            if (this.homes[i].id === id) {
+                return this.homes[i];
+            }
+        }
+        
+        return 0;
+    },
     serverMsg: function(message) {
         var builder = packet.builder(packet.family.TALK, packet.action.SERVER);
         builder.addBreakString(message);

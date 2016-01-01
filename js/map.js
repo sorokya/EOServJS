@@ -246,6 +246,21 @@ function Map(id, world) {
         relogX: 0,
         relogY: 0,
         filesize: 0,
+        getCharacter: function(name) {
+            return this.characters.filter(function(char) {
+                return char.name === name;
+            })[0];
+        },
+        getCharacterPID: function(id) {
+            return this.characters.filter(function(char) {
+                return char.playerID() === id;
+            })[0];
+        },
+        getCharacterCID: function(id) {
+            return this.characters.filter(function(char) {
+                return char.id === id;
+            })[0];
+        },
         inBounds: function(x, y) {
             return !(x >= this.width || y >= this.height);
         },

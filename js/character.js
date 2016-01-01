@@ -221,7 +221,7 @@ function Character(data, world, user) {
         
         player: null,
         guild_tag: data.guild.trim(),
-        guild: data.guild,
+        guild: null,
         guild_rank: data.guild_rank,
         guild_rank_string: data.guild_rank_string,
         
@@ -244,6 +244,148 @@ function Character(data, world, user) {
         unregister_npc: [],
         quests: [],
         quests_inactive: [],
+        
+        unequip: function(item, subLoc) {
+            if (item === 0) {
+                return false;
+            }
+            
+            for (var i = 0; i < this.paperdoll.length; i++) {
+                if (this.paperdoll[i] === item) {
+                    if (((i === structs.equipmentLocation.ring2 || i === structs.equipmentLocation.armlet2 || i === structs.equipmentLocation.bracer2) ? 1 : 0) === subLoc || 0) {
+                        this.paperdoll[i] = 0;
+                        this.addItem(item, 1);
+                        this.calculateStats();
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        },
+        
+        equip: function(item, subLoc) {
+            var $this = this;
+            
+            function characterEquipOneSlot(slot) {
+                if ($this.paperdoll[slot] !== 0) {
+                    return false;
+                }
+                
+                $this.paperdoll[slot] = item;
+                $this.delItem(item, 1);
+                
+                $this.calculateStats();
+                return true;
+            }
+            
+            function characterEquipTwoSlot(slot, slot2) {
+                if (subLoc === 0) {
+                    if ($this.paperdoll[slot] !== 0) {
+                        return false;
+                    }
+                    
+                    $this.paperdoll[slot] = item;
+                    $this.delItem(item, 1);
+                } else {
+                    if ($this.paperdoll[slot2] !== 0) {
+                        return false;
+                    }
+                    
+                    $this.paperdoll[slot2] = item;
+                    $this.delItem(item, 1);
+                }
+                
+                $this.calculateStats();
+                return true;
+            }
+            
+            if (!this.hasItem(item)) {
+                return false;
+            }
+            
+            var eif = this.world.eif.get(item);
+            var ecf = this.world.ecf.get(this.class);
+            
+            if (eif.type === structs.EIFType.armor && eif.gender !== this.gender) {
+                return false;
+            }
+            
+            if (eif.type === structs.EIFType.weapon && eif.subType == structs.EIFSubType.twoHanded) {
+                if (this.paperdoll[structs.equipmentLocation.shield]) {
+                    var shield_eif = this.world.eif.get(this.paperdoll[structs.equipmentLocation.shield]);
+                    
+                    if (eif.dualWieldDollGraphic || (shield_eif.subType !== structs.EIFSubType.arrows && shield_eif.subType !== structs.EIFSubType.wings)) {
+                        this.statusMsg('This is a two-handed weapon. Remove your shield first.');
+                        return false;
+                    }
+                }
+            }
+            
+            if (eif.type === structs.EIFType.shield) {
+                if (this.paperdoll[structs.equipmentLocation.weapon]) {
+                    var weapon_eif = this.world.eif.get(this.paperdoll[structs.equipmentLocation.weapon]);
+                    
+                    if (weapon_eif.subType === structs.EIFSubType.twoHanded
+                    && (weapon_eif.dualWieldDollGraphic || (eif.subtype !== structs.EIFSubType.arrows && eif.subtype !== structs.EIFSubType.wings))) {
+                        this.statusMsg('You are holding a a two-handed weapon. You cannot equip a shield.');
+                        return false;
+                    }
+                }
+            }
+            
+            if (this.level < eif.levelReq || (this.class != eif.classReq && ecf.base != eif.classReq)
+            || this.adjustStr < eif.strReq || this.adjustInt < eif.intreq
+            || this.adjustWis < eif.wisReq || this.adjustAgi < eif.agireq
+            || this.adjustCon < eif.conReq || this.adjustCha < eif.chareq) {
+                return false;
+            }
+            
+            switch (eif.type) {
+                case structs.EIFType.weapon:
+                    return characterEquipOneSlot(structs.equipmentLocation.weapon);
+                case structs.EIFType.shield:
+                    return characterEquipOneSlot(structs.equipmentLocation.shield);
+                case structs.EIFType.hat:
+                    return characterEquipOneSlot(structs.equipmentLocation.hat);
+                case structs.EIFType.boots:
+                    return characterEquipOneSlot(structs.equipmentLocation.boots);
+                case structs.EIFType.gloves:
+                    return characterEquipOneSlot(structs.equipmentLocation.gloves);
+                case structs.EIFType.accessory:
+                    return characterEquipOneSlot(structs.equipmentLocation.accessory);
+                case structs.EIFType.belt:
+                    return characterEquipOneSlot(structs.equipmentLocation.belt);
+                case structs.EIFType.armor:
+                    return characterEquipOneSlot(structs.equipmentLocation.armor);
+                case structs.EIFType.necklace:
+                    return characterEquipOneSlot(structs.equipmentLocation.necklace);
+                case structs.EIFType.ring:
+                    return characterEquipTwoSlot(structs.equipmentLocation.ring1, structs.equipmentLocation.ring2);
+                case structs.EIFType.armlet:
+                    return characterEquipTwoSlot(structs.equipmentLocation.armlet1, structs.equipmentLocation.armlet2);
+                case structs.EIFType.bracer:
+                    return characterEquipTwoSlot(structs.equipmentLocation.bracer1, structs.equipmentLocation.bracer2);
+                default:
+                    return false;
+            }
+        },
+        
+        guildNameString: function() {
+            return this.guild ? this.guild.string : '';  
+        },
+        
+        guildRankString: function() {
+            if (!this.guild) {
+                return '';
+            } else {
+                return this.guild.getRank(this.guild_rank)
+            }
+        },
+        
+        homeString: function() {
+            return this.world.getHome(this).name;
+        },
         
         cancelSpell: function() {
             

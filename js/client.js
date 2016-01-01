@@ -15,6 +15,7 @@ var attack_handler = require('./handlers/attack.js');
 var talk_handler = require('./handlers/talk.js');
 var warp_handler = require('./handlers/warp.js');
 var chest_handler = require('./handlers/chest.js');
+var paperdoll_handler = require('./handlers/paperdoll.js');
 var utils = require('./utils.js');
 
 module.exports = function(server, socket) {
@@ -177,49 +178,53 @@ module.exports = function(server, socket) {
     }
 
     switch(reader.family) {
-      case packet.family.INIT:
-        init_handler(client, reader);
-        break;
-      case packet.family.LOGIN:
-        login_handler(client, reader);
-        break;
-      case packet.family.ACCOUNT:
-        account_handler(client, reader);
-        break;
-      case packet.family.CHARACTER:
-        character_handler(client.player, reader);
-        break;
-      case packet.family.WELCOME:
-        welcome_handler(client.player, reader);
-        break;
-      case packet.family.FACE:
-        face_handler(client.player.character, reader);
-        break;
-      case packet.family.WALK:
-        walk_handler(client.player.character, reader);
-        break;
-      case packet.family.EMOTE:
-        emote_handler(client.player.character, reader);
-        break;
-      case packet.family.SIT:
-        sit_handler(client.player.character, reader);
-        break;
-      case packet.family.CHAIR:
-        chair_handler(client.player.character, reader);
-        break;
-      case packet.family.ATTACK:
-        attack_handler(client.player.character, reader);
-      case packet.family.TALK:
-        talk_handler(client.player.character, reader);
-        break;
-      case packet.family.WARP:
-        warp_handler(client.player.character, reader);
-        break;
-      case packet.family.CHEST:
-        chest_handler(client.player.character, reader);
-        break;
-      default:
-        break;
+        case packet.family.INIT:
+            init_handler(client, reader);
+            break;
+        case packet.family.LOGIN:
+            login_handler(client, reader);
+            break;
+        case packet.family.ACCOUNT:
+            account_handler(client, reader);
+            break;
+        case packet.family.CHARACTER:
+            character_handler(client.player, reader);
+            break;
+        case packet.family.WELCOME:
+            welcome_handler(client.player, reader);
+            break;
+        case packet.family.FACE:
+            face_handler(client.player.character, reader);
+            break;
+        case packet.family.WALK:
+            walk_handler(client.player.character, reader);
+            break;
+        case packet.family.EMOTE:
+            emote_handler(client.player.character, reader);
+            break;
+        case packet.family.SIT:
+            sit_handler(client.player.character, reader);
+            break;
+        case packet.family.CHAIR:
+            chair_handler(client.player.character, reader);
+            break;
+        case packet.family.ATTACK:
+            attack_handler(client.player.character, reader);
+            break;
+        case packet.family.TALK:
+            talk_handler(client.player.character, reader);
+            break;
+        case packet.family.WARP:
+            warp_handler(client.player.character, reader);
+            break;
+        case packet.family.CHEST:
+            chest_handler(client.player.character, reader);
+            break;
+        case packet.family.PAPERDOLL:
+            paperdoll_handler(client.player.character, reader);
+            break;
+        default:
+            break;
     }
   }
 

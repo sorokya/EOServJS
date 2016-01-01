@@ -19,6 +19,7 @@ var eoserver = {
     this.world.enf = this.eodata.ENF;
     this.world.ecf = this.eodata.ECF;
     this.world.esf = this.eodata.ESF;
+    this.world.homes = this.eodata.homes;
     
     this.world.loadMaps();
 

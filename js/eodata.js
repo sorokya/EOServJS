@@ -423,11 +423,75 @@ var ECF = function () {
   }
 }
 
+// main.name = Wanderer
+// main.location = 2,13,40
+// level.1 = main
+
+// aeven.name = Aeven
+// aeven.location = 4,24,27
+// aeven.innkeeper = 150
+// aeven.question1 = How many houses are on the Aeven map?
+// aeven.question2 = What is the name of the blue hair guy near Aeven square?
+// aeven.question3 = How much do flowers cost at the Aeven grocery?
+// aeven.answer1 = 20
+// aeven.answer2 = dan
+// aeven.answer3 = 120
+
+function homes() {
+    try {
+        var stats = fs.statSync(config.HomeFile);
+        if (stats) {
+            var lines = packet.bufferToStr(fs.readFileSync(config.HomeFile)).split('\n');
+            var homes = [];
+            
+            utils.forEach(lines, function(line) {
+                if (line.trim() !== '' && line[0] !== '#') {
+                    var key = line.split('=')[0];
+                    var value = line.split('=')[1];
+                    var homeIndex;
+                    
+                    if (key.indexOf('level') === 0) {
+                        homeIndex = homes.indexOf(homes.filter(function(home) {
+                            return home.id === value.trim();
+                        })[0]);
+                        
+                        if (homeIndex > -1) {
+                            homes[homeIndex].level = Number(key.split('.')[1].trim());
+                        }
+                    } else {
+                        var homeID = key.split('.')[0].trim();
+                        
+                        homeIndex = homes.indexOf(homes.filter(function(home) {
+                            return home.id === homeID;
+                        })[0]);
+                        
+                        if (homeIndex > -1) {
+                            homes[homeIndex][key.split('.')[1].trim()] = value.trim();
+                        } else {
+                            var home = {
+                                id: homeID
+                            };
+                            
+                            home[key.split('.')[1].trim()] = value.trim();
+                            homes.push(home);
+                        }
+                    }
+                }
+            });
+            
+            return homes;
+        }
+    } catch (e) {
+        console.log('ERROR: can not read homes file');
+    }
+}
+
 module.exports = function() {
   return {
     EIF: EIF(),
     ECF: ECF(),
     ESF: ESF(),
-    ENF: ENF()
+    ENF: ENF(),
+    homes: homes()
   }
 }
