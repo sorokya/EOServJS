@@ -1,5 +1,6 @@
 module.exports = {
   random: function(min, max) {
+    max++;
     return Math.floor(Math.random() * (max - min) + min);
   },
   forEach: function(ary, fn_callback) {

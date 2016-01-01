@@ -26,5 +26,19 @@
     "Maps": 278,
     
     "QuestDir": "./data/quests",
-    "Quests": 0
+    "Quests": 0,
+    
+    "RecoverSpeed": "90s",
+    "NPCRecoverSpeed": "105s",
+    
+    "HPRecoverRate": "10%",
+    "SitHPRecoverRate": "20%",
+    "TPRecoverRate": "10%",
+    "SitTPRecoverRate": "20%",
+    "NPCRecoverRate": "10%",
+    
+    "MaxItem": 2000000000,
+    
+    "MaxChest": 10000000,
+    "ChestSlots": 5
 }

@@ -1,3 +1,4 @@
+var config = require('./config.js');
 var utils = require('./utils.js');
 var structs = require('./structs.js');
 var packet = require('./packet.js');
@@ -181,7 +182,7 @@ function Character(data, world, user) {
         trading: false,
         trade_partner: 0,
         trade_agree: false,
-        trade_inventory: null,
+        trade_inventory: [],
         
         party_trust_send: 0,
         party_trust_recv: 0,
@@ -248,26 +249,93 @@ function Character(data, world, user) {
             
         },
         
-        addItem: function(id, amount) {
+        canHoldItem: function(id, max_amount) {
+            var amount = max_amount;
+            
+            if (config.enforceWeight && this.admin === 0) {
+                var item = this.world.eif.get(id);
+                
+                if (this.weight > this.max_weight) {
+                    amount = 0;
+                } else if (!item.id || item.weight === 0) {
+                    amount = max_amount;
+                } else {
+                    amount = Math.min((this.max_weight - this.weight) / item.weight, max_amount);
+                }
+            }
+            
+            return Math.min(amount, config.MaxItem);
+        },
+        
+        hasItem: function(id, include_trade) {
+            var $this = this;
+            
+            for(var i = 0; i < $this.inventory.length; i++) {
+                var item = $this.inventory[i];
+                
+                if (item.id === id) {
+                    if ($this.trading && include_trade) {
+                        for (var ii = 0; ii < $this.trade_inventory.length; ii++) {
+                            var trade_item = $this.trade_inventory[ii];
+                            if (trade_item === id) {
+                                return Math.max(item.amount - trade_item.amount, 0);
+                            }
+                        }
+                        
+                        return item.amount;
+                    } else {
+                        return item.amount;
+                    }
+                }
+            }
+            
+            return 0;
+        },
+        
+        delItem: function(id, amount) {
+            var $this = this;
+            
             if (amount <= 0) {
                 return false;
             }
             
-            if (id <= 0 || id >= this.world.eif.data.length) {
+            for (var i = 0; i < $this.inventory.length; i++) {
+                var item = $this.inventory[i];
+                if (item.id === id) {
+                    if (item.amount < 0 || item.amount - amount <= 0) {
+                        $this.inventory.splice(i, 1);
+                    } else {
+                        $this.inventory[i].amount -= amount;
+                    }
+                    
+                    $this.calculateStats();
+                    return true;
+                }
+            }
+        },
+        
+        addItem: function(id, amount) {
+            var $this = this;
+            if (amount <= 0) {
                 return false;
             }
             
-            utils.forEach(this.inventory, function(item, i) {
-                if (item === id) {
-                    if (item.amount  + amount < 0) {
+            if (id <= 0 || id >= $this.world.eif.data.length) {
+                return false;
+            }
+            
+            for (var i = 0; i < $this.inventory.length; i++) {
+                var item = $this.inventory[i];
+                if (item.id === id) {
+                    if (item.amount + amount < 0) {
                         return;
                     }
                     
-                    this.inventory[i].amount += amount;
-                    this.calculateStats();
+                    $this.inventory[i].amount += amount;
+                    $this.calculateStats();
                     return true;
                 }
-            });
+            }
             
             var newItem = {};
             newItem.id = id;

@@ -8,6 +8,7 @@ var player = require('./player.js');
 var map = require('./map.js');
 var structs = require('./structs.js');
 var packet = require('./packet.js');
+var config = require('./config.js');
 
 module.exports = function(server) {
   var world = {
@@ -28,7 +29,7 @@ module.exports = function(server) {
     serverMsg: function(message) {
         var builder = packet.builder(packet.family.TALK, packet.action.SERVER);
         builder.addBreakString(message);
-        
+
         utils.forEach(this.characters, function(char) {
             char.send(builder);
         });
@@ -38,7 +39,7 @@ module.exports = function(server) {
         var builder = packet.builder(packet.family.TALK, packet.action.ANNOUNCE);
         builder.addBreakString(fromStr);
         builder.addBreakString(message);
-        
+
         utils.forEach(this.characters, function(char) {
             if (char !== from || echo) {
                 char.send(builder);
@@ -47,11 +48,11 @@ module.exports = function(server) {
     },
     msg: function(from, message, echo) {
         var fromStr = from ? from.name : 'server';
-        
+
         var builder = packet.builder(packet.family.TALK, packet.action.MSG);
         builder.addBreakString(fromStr);
         builder.addBreakString(message);
-        
+
         utils.forEach(this.characters, function(char) {
             if (char !== from || echo) {
                 char.send(builder);
@@ -62,7 +63,7 @@ module.exports = function(server) {
         var found = this.characters.filter(function(char){
             return char.name === name;
         });
-        
+
         if (found && found.length) {
             return found[0];
         }
@@ -100,7 +101,7 @@ module.exports = function(server) {
         if (this.getMap(character.mapid)) {
             this.getMap(character.mapid).leave(character, structs.warpAnimation.none);
         }
-        
+
         this.characters.splice(this.characters.indexOf(this.characters.filter(function(char) {
             return char.id === character.id;
         })[0]), 1);
@@ -114,7 +115,7 @@ module.exports = function(server) {
         if (client.player.character) {
             client.player.character.logout();
         }
-          
+
         client.player.online = false;
         client.close();
       }
@@ -158,12 +159,52 @@ module.exports = function(server) {
           user.save();
         }
       }
+    },
+    loadMaps: function() {
+        for(var i = 0; i < config.Maps; i++) {
+            world.maps.push(map(i, world));
+        }
     }
   };
   
-  for(var i = 0; i < 278; i++) {
-    world.maps.push(map(i));
+  function recover() {
+      utils.forEach(world.characters, function(char) {
+        var updated = false;
+        
+        if (char.hp !== char.max_hp) {
+            if (char.sitting === structs.sitState.stand) {
+                char.hp += config.HPRecoverRate * char.max_hp;
+            } else {
+                char.hp += config.SitHPRecoverRate * char.max_hp;
+            }
+            
+            char.hp = Math.min(char.hp, char.max_hp);
+            updated = true;
+        }
+        
+        if (char.tp !== char.max_tp) {
+            if (char.sitting === structs.sitState.stand) {
+                char.tp += config.TPRecoverRate * char.max_tp;
+            } else {
+                char.tp += config.SitTPRecoverRate * char.max_tp;
+            }
+            
+            char.tp = Math.min(char.tp, char.max_tp);
+            updated = true;
+        }
+        
+        
+        if (updated) {
+            var builder = packet.builder(packet.family.RECOVER, packet.action.PLAYER);
+            builder.addShort(char.hp);
+            builder.addShort(char.tp);
+            builder.addShort(0); // ?
+            char.send(builder);
+        } 
+      });
   }
   
+  setInterval(recover, config.RecoverSpeed);
+
   return world;
 }

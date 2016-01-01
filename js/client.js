@@ -14,6 +14,7 @@ var chair_handler = require('./handlers/chair.js');
 var attack_handler = require('./handlers/attack.js');
 var talk_handler = require('./handlers/talk.js');
 var warp_handler = require('./handlers/warp.js');
+var chest_handler = require('./handlers/chest.js');
 var utils = require('./utils.js');
 
 module.exports = function(server, socket) {
@@ -213,6 +214,10 @@ module.exports = function(server, socket) {
         break;
       case packet.family.WARP:
         warp_handler(client.player.character, reader);
+        break;
+      case packet.family.CHEST:
+        chest_handler(client.player.character, reader);
+        break;
       default:
         break;
     }

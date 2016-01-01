@@ -20,13 +20,206 @@ function mapItem(uid, id, amount, x, y, owner, unProtectTime) {
     }
 }
 
-function mapWarp() {
+function mapWarp(map, x, y, levelReq, spec) {
     return {
-        map: 0,
-        x: 0,
-        y: 0,
-        levelReq: 0
+        map: map,
+        x: x,
+        y: y,
+        levelReq: levelReq,
+        spec: spec,
+        open: false
     }
+}
+
+function mapChest(x, y) {
+    return {
+        x: x,
+        y: y,
+        
+        items: [],
+        spawns: [],
+        slots: 0,
+        
+        hasItem: function(id) {
+            for (var i = 0; i < this.items.length; i++) {
+                var item = this.items[i];
+                if (item.id === id) {
+                    return item.amount;
+                }
+            }
+            
+            return 0;
+        },
+        
+        addItem: function(id, amount, slot) {
+            var $this = this;
+            
+            if (amount <= 0) {
+                return 0;
+            }
+            
+            if (!slot) {
+                for (var i = 0; i < $this.items.length; i++) {
+                    var item = $this.items[i];
+                    if (item.id === id) {
+                        if (item.amount + amount < 0 || item.amount + amount > config.MaxChests) {
+                            return 0;
+                        }
+                        
+                        $this.items[i].amount += amount;
+                        return amount;
+                    }
+                }
+            }
+            
+            if ($this.items.length >= config.ChestSlots || amount > config.MaxChests) {
+                return 0;
+            }
+            
+            if (!slot) {
+                var userItems = 0;
+                
+                for (var i = 0; i < $this.items.length; i++) {
+                    var item = $this.items[i];
+                    if (item.slot === 0) {
+                        ++userItems;
+                    } 
+                    
+                    if (userItems + $this.slots >= config.ChestSlots) {
+                        return 0;
+                    }
+                }
+            }
+            
+            var chestItem = {
+                id: id,
+                amount: amount,
+                slot: slot || 0
+            };
+            
+            if (!slot) {
+                $this.items.push(chestItem);
+            } else {
+                $this.items.unshift(chestItem);
+            }
+            
+            return amount;
+        },
+        
+        delItem: function(id) {
+            var $this = this;
+            for (var i = 0; i < $this.items.length; i++) {
+                var item = $this.items[i];
+                if (item.id === id) {
+                    var amount = item.amount;
+                    
+                    if (item.slot) {
+                        var now = new Date;
+                        
+                        utils.forEach($this.spawns, function(spawn, ii) {
+                            if (spawn.slot === item.slot) {
+                                $this.spawns[ii].last_taken = now;
+                            } 
+                        });
+                    }
+                    
+                    $this.items.splice(i, 1);
+                    return amount;
+                }
+            }
+        },
+        
+        delSomeItem: function(id, amount) {
+            var $this = this;
+            for (var i = 0; i < $this.items.length; i++) {
+                var item = $this.items[i];
+                if (item.id === id) {
+                    if (amount < item.amount) {
+                        $this.items[i].amount -= amount;
+                        
+                        if (item.slot) {
+                            var now = new Date;
+                            
+                            utils.forEach($this.spawns, function(spawn, ii) {
+                                if (spawn.slot === item.slot) {
+                                    $this.spawns[ii].last_taken = now;
+                                } 
+                            });
+                            
+                            $this.items[i].slot = 0;
+                        }
+                        
+                        return $this.item[i].amount;
+                    } else {
+                        return $this.delItem(id);
+                    }
+                } 
+            }
+            
+            return 0;
+        },
+        
+        update: function(map, exclude) {
+            var $this = this;
+            var builder = packet.builder(packet.family.CHEST, packet.action.AGREE);
+            
+            utils.forEach(this.items, function(item) {
+                builder.addShort(item.id);
+                builder.addThree(item.amount); 
+            });
+            
+            utils.forEach(map.characters, function(char) {
+                if (char !== exclude && utils.pathLength(char.x, char.y, $this.x, $this.y) <= 1) {
+                    char.send(builder);
+                }
+            });
+        }
+    }
+}
+
+function spawnChests(map) {
+    var now = new Date;
+    
+    utils.forEach(map.chests, function(chest, i) {
+        var needsUpdate = false;
+        
+        var spawns = [];
+        
+        utils.forEach(chest.spawns, function(spawn) {
+             var nextSpawnTime = new Date(spawn.last_taken);
+             nextSpawnTime.setMinutes(nextSpawnTime.getMinutes() + spawn.time);
+             
+             if (nextSpawnTime <= now) {
+                 var slot_used = false;
+                 
+                 utils.forEach(chest.items, function(item) {
+                    if (item.slot === spawn.slot) {
+                        slot_used = true;
+                    }
+                 });
+                 
+                 if (!slot_used) {
+                     if (typeof spawns[spawn.slot - 1] !== 'undefined') {
+                         spawns[spawn.slot - 1].push(spawn);
+                     } else {
+                         spawns[spawn.slot - 1] = [spawn];
+                     }
+                 }
+             }
+        });
+        
+        utils.forEach(spawns, function(slot_spawns) {
+            if (slot_spawns && slot_spawns.length > 0) {
+                var spawn = slot_spawns[utils.random(0, slot_spawns.length - 1)];
+                map.chests[i].addItem(spawn.item.id, spawn.item.amount, spawn.slot);
+                needsUpdate = true;
+            }
+        });
+        
+        if (needsUpdate) {
+            map.chests[i].update(map);
+        }
+    });
 }
 
 function Map(id, world) {
@@ -199,7 +392,7 @@ function Map(id, world) {
         },
         face: function (character, direction) {
             character.direction = direction;
-            // character.cancelSpell();  
+            character.cancelSpell();  
             
             var builder = packet.builder(packet.family.FACE, packet.action.PLAYER);
             builder.addShort(character.playerID());
@@ -259,9 +452,16 @@ function Map(id, world) {
                 // if (this.occupied) TODO: ghosts
             }
             
-            // TODO: handle warps
+            var warp = this.getTile(targetX, targetY).warp;
             
-            character.last_walk = 0; // TODO: actual last walk
+            if (warp) {
+                if (character.level >= warp.levelReq && (warp.spec === structs.warpSpec.NoDoor || warp.open)) {
+                    character.warp(warp.map, warp.x, warp.y);
+                    return structs.walkResult.warped;
+                }
+            }
+            
+            character.last_walk = new Date;
             character.attacks = 0;
             character.cancelSpell();
             character.direction = direction;
@@ -494,7 +694,7 @@ function Map(id, world) {
                 buf.curPos += length;
                 return ret;
             }
-
+            
             for (var i = 0; i <  5 - this.id.toString().length; i++) {
                 fileName += '0';
             }
@@ -591,10 +791,6 @@ function Map(id, world) {
                     buf = readBuf(fData, 1);
                     outersize = packet.packEOInt(buf[0].charCodeAt());
                     
-                    if (this.id === 192) {
-                        var foo = 'bar';
-                    }
-                    
                     for (var i = 0; i < outersize; i++) {
                         buf = readBuf(fData, 2);
                         var yloc = packet.packEOInt(buf[0].charCodeAt());
@@ -608,6 +804,14 @@ function Map(id, world) {
                             var tile = this.getTile(xloc, yloc);
                             tile.tilespec = spec;
                             this.setTile(xloc, yloc, tile);
+                            
+                            if (spec === structs.tileSpec.chest) {
+                                this.chests.push(mapChest(xloc, yloc));
+                            }
+                            
+                            if (spec === structs.tileSpec.spikes1) {
+                                this.has_timed_spikes = true;
+                            }
                         }
                     }
                     
@@ -619,18 +823,17 @@ function Map(id, world) {
                         innersize = packet.packEOInt(buf[1].charCodeAt());
                         
                         for (var ii = 0; ii < innersize; ii++) {
-                            var newWarp = {};
                             buf = readBuf(fData, 8);
                             var xloc = packet.packEOInt(buf[0].charCodeAt());
                             
-                            newWarp.map = packet.packEOInt(buf[1].charCodeAt(), buf[2].charCodeAt());
-                            newWarp.x = packet.packEOInt(buf[3].charCodeAt());
-                            newWarp.y = packet.packEOInt(buf[4].charCodeAt());
-                            newWarp.levelReq = packet.packEOInt(buf[5].charCodeAt());
-                            newWarp.spec = packet.packEOInt(buf[6].charCodeAt(), buf[7].charCodeAt());
+                            var map = packet.packEOInt(buf[1].charCodeAt(), buf[2].charCodeAt());
+                            var x = packet.packEOInt(buf[3].charCodeAt());
+                            var y = packet.packEOInt(buf[4].charCodeAt());
+                            var levelReq = packet.packEOInt(buf[5].charCodeAt());
+                            var spec = packet.packEOInt(buf[6].charCodeAt(), buf[7].charCodeAt());
                             
                             var tile = this.getTile(xloc, yloc);
-                            tile.warp = newWarp;
+                            tile.warp = mapWarp(map, x, y, levelReq, spec);
                             this.setTile(xloc, yloc, tile);
                         }
                     }
@@ -670,7 +873,31 @@ function Map(id, world) {
                         var time = packet.packEOInt(buf[7].charCodeAt(), buf[8].charCodeAt());
                         var amount = packet.packEOInt(buf[9].charCodeAt(), buf[10].charCodeAt(), buf[11].charCodeAt());
                         
-                        // TODO: chests
+                        if (itemID !== this.world.eif.get(itemID).id) {
+                            console.log('A chest spawn on map ' + this.id + ' uses a non-existent item (#' + itemID + ' at ' + x + 'x' + y + ')')
+                        }
+                        
+                        var chestIndex = this.chests.indexOf(this.chests.filter(function(chest) {
+                            return chest.x === x && chest.y === y;
+                        })[0]);
+                        
+                        if (chestIndex > -1) {
+                            var now = new Date();
+                            var spawn = {
+                                slot: slot + 1,
+                                time: time,
+                                last_taken: now,
+                                item: {
+                                    id: itemID,
+                                    amount: amount
+                                }
+                            };
+                            
+                            this.chests[chestIndex].spawns.push(spawn);
+                            this.chests[chestIndex].slots = Math.max(this.chests[chestIndex].slots, slot + 1);
+                        } else {
+                            console.log('A chest spawn on map ' + this.id + ' points to a non-chest (' + this.world.eif.get(itemID).name + ' x' + amount + ' at ' + x + 'x' + y + ')')
+                        }
                     }
                     
                     this.filesize = fData.length;
@@ -683,6 +910,12 @@ function Map(id, world) {
     };
     
     map.load();
+    
+    if (map.chests.length > 0) {
+        setInterval(function() {
+            spawnChests(map);
+        }, 60 * 1000);
+    }
     
 	return map;
 }

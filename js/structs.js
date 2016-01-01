@@ -284,5 +284,13 @@ module.exports = {
   warpType: {
       local: 1,
       switch: 2
+  },
+  
+  warpSpec: {
+      NoDoor: 0,
+      Door: 1,
+      LockedSilver: 2,
+      LockedCrystal: 3,
+      LockedWraith: 4
   }
 };
