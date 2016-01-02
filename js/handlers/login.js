@@ -19,14 +19,14 @@ function login_handler(client, reader) {
 	function login_request() {
 		var username = reader.getBreakString().toLowerCase();
 		var password = reader.getBreakString();
-
-		var user = data.users.filter(function(user) {
+		
+		var user = data.users.filter(function (user) {
 			return user.account.username === username && user.account.password === password;
 		})[0];
-
+		
 		var reply = packet.builder(packet.family.LOGIN, packet.action.REPLY);
-
-		if(!user) {
+		
+		if (!user) {
 			reply.addShort(loginReply.wrongUserPass);
 			client.send(reply);
 		} else if (client.server.world.playerOnline(username)) {
@@ -37,13 +37,13 @@ function login_handler(client, reader) {
 			client.player = client.server.world.login(username);
 			client.player.setClient(client);
 			client.player.id = client.id;
-
+			
 			reply.addShort(loginReply.ok);
 			reply.addChar(client.player.characters.length);
 			reply.addByte(2);
 			reply.addByte(255);
-
-			utils.forEach(client.player.characters, function(c) {
+			
+			utils.forEach(client.player.characters, function (c) {
 				reply.addBreakString(c.name);
 				reply.addInt(c.id);
 				reply.addChar(c.level);
@@ -55,12 +55,12 @@ function login_handler(client, reader) {
 				c.addPaperdollData(reply, 'BAHSW');
 				reply.addByte(255);
 			});
-
+			
 			client.send(reply);
 		}
 	}
-
-	switch(reader.action) {
+	
+	switch (reader.action) {
 		case packet.action.REQUEST:
 			login_request();
 			break;

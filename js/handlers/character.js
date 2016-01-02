@@ -8,142 +8,142 @@ var utils = require('../utils.js');
 var data = require('../data.js');
 
 var characterReply = {
-  exists: 1,
-  full: 2,
-  notApproved: 4,
-  ok: 5,
-  deleted: 6
+	exists: 1,
+	full: 2,
+	notApproved: 4,
+	ok: 5,
+	deleted: 6
 }
 
 function character_handler(player, reader) {
-
-  // request character creation
-  function character_request() {
-    var reply = packet.builder(packet.family.CHARACTER, packet.action.REPLY);
-    reply.addShort(1000);
-    reply.addString('OK');
-    player.send(reply);
-  }
-
-  // create character
-  function character_create() {
-    reader.getShort();
-    var gender = reader.getShort();
-    var hairStyle = reader.getShort();
-    var hairColor = reader.getShort();
-    var race = reader.getShort();
-
-    reader.getByte(); // ?
-    var name = reader.getBreakString().toLowerCase();
-
-    var reply = packet.builder(packet.family.CHARACTER, packet.action.REPLY);
-
-    if (player.characters.length >= 3) {
-      reply.addShort(characterReply.full);
-    } else if (player.world.characterExists(name)) {
-      reply.addShort(characterReply.exists);
-    } else {
-      player.addCharacter(name, gender, hairStyle, hairColor, race);
-      console.log('New character: ' + name + ' (' + player.username + ')');
-
-      reply.addShort(characterReply.ok);
-      reply.addChar(player.characters.length);
-      reply.addByte(1); // ?
-      reply.addByte(255);
-      utils.forEach(player.characters, function(c) {
-        reply.addBreakString(c.name);
-        reply.addInt(c.id);
-        reply.addChar(c.level);
-        reply.addChar(c.gender);
-        reply.addChar(c.hairStyle);
-        reply.addChar(c.hairColor);
-        reply.addChar(c.race);
-        reply.addChar(c.admin);
-
-        // character->AddPaperdollData(reply, "BAHSW");*/
-        reply.addShort(0);
-        reply.addShort(0);
-        reply.addShort(0);
-        reply.addShort(0);
-        reply.addShort(0);
-
-        reply.addByte(255);
-      });
-    }
-
-    player.send(reply);
-  }
-
-  // request delete character
-  function character_take() {
-    var id = reader.getInt();
-
-    var reply = packet.builder(packet.family.CHARACTER, packet.action.PLAYER);
-    reply.addShort(1000);
-    reply.addInt(id);
-
-    player.send(reply);
-  }
-
-  // delete character
-  function character_remove() {
-    reader.getShort();
-    var id = reader.getInt();
-
-    var character = player.characters.filter(function (c) {
-      return c.id === id;
-    })[0];
-
-    if(!character) {
-      return;
-    }
-
-    player.world.deleteCharacter(character.name);
-    player.characters.splice(player.characters.indexOf(character), 1);
-
-    var reply = packet.builder(packet.family.CHARACTER, packet.action.REPLY);
-    reply.addShort(characterReply.deleted);
-    reply.addChar(player.characters.length);
-    reply.addByte(1);
-    reply.addByte(255);
-
-    utils.forEach(player.characters, function(c) {
-      reply.addBreakString(c.name);
-      reply.addInt(c.id);
-      reply.addChar(c.level);
-      reply.addChar(c.gender);
-      reply.addChar(c.hairStyle);
-      reply.addChar(c.hairColor);
-      reply.addChar(c.race);
-      reply.addChar(c.admin);
-
-      // TODO: real paperdoll data
-      // character->AddPaperdollData(reply, "BAHSW");*/
-      reply.addShort(0);
-      reply.addShort(0);
-      reply.addShort(0);
-      reply.addShort(0);
-      reply.addShort(0);
-
-      reply.addByte(255);
-    });
-
-    player.send(reply);
-  }
-
-	switch(reader.action) {
-    case packet.action.REQUEST:
-      character_request();
-      break;
-    case packet.action.CREATE:
-      character_create();
-      break;
-    case packet.action.TAKE:
-      character_take();
-      break;
-    case packet.action.REMOVE:
-      character_remove();
-      break;
+	
+	// request character creation
+	function character_request() {
+		var reply = packet.builder(packet.family.CHARACTER, packet.action.REPLY);
+		reply.addShort(1000);
+		reply.addString('OK');
+		player.send(reply);
+	}
+	
+	// create character
+	function character_create() {
+		reader.getShort();
+		var gender = reader.getShort();
+		var hairStyle = reader.getShort();
+		var hairColor = reader.getShort();
+		var race = reader.getShort();
+		
+		reader.getByte(); // ?
+		var name = reader.getBreakString().toLowerCase();
+		
+		var reply = packet.builder(packet.family.CHARACTER, packet.action.REPLY);
+		
+		if (player.characters.length >= 3) {
+			reply.addShort(characterReply.full);
+		} else if (player.world.characterExists(name)) {
+			reply.addShort(characterReply.exists);
+		} else {
+			player.addCharacter(name, gender, hairStyle, hairColor, race);
+			console.log('New character: ' + name + ' (' + player.username + ')');
+			
+			reply.addShort(characterReply.ok);
+			reply.addChar(player.characters.length);
+			reply.addByte(1); // ?
+			reply.addByte(255);
+			utils.forEach(player.characters, function (c) {
+				reply.addBreakString(c.name);
+				reply.addInt(c.id);
+				reply.addChar(c.level);
+				reply.addChar(c.gender);
+				reply.addChar(c.hairStyle);
+				reply.addChar(c.hairColor);
+				reply.addChar(c.race);
+				reply.addChar(c.admin);
+				
+				// character->AddPaperdollData(reply, "BAHSW");*/
+				reply.addShort(0);
+				reply.addShort(0);
+				reply.addShort(0);
+				reply.addShort(0);
+				reply.addShort(0);
+				
+				reply.addByte(255);
+			});
+		}
+		
+		player.send(reply);
+	}
+	
+	// request delete character
+	function character_take() {
+		var id = reader.getInt();
+		
+		var reply = packet.builder(packet.family.CHARACTER, packet.action.PLAYER);
+		reply.addShort(1000);
+		reply.addInt(id);
+		
+		player.send(reply);
+	}
+	
+	// delete character
+	function character_remove() {
+		reader.getShort();
+		var id = reader.getInt();
+		
+		var character = player.characters.filter(function (c) {
+			return c.id === id;
+		})[0];
+		
+		if (!character) {
+			return;
+		}
+		
+		player.world.deleteCharacter(character.name);
+		player.characters.splice(player.characters.indexOf(character), 1);
+		
+		var reply = packet.builder(packet.family.CHARACTER, packet.action.REPLY);
+		reply.addShort(characterReply.deleted);
+		reply.addChar(player.characters.length);
+		reply.addByte(1);
+		reply.addByte(255);
+		
+		utils.forEach(player.characters, function (c) {
+			reply.addBreakString(c.name);
+			reply.addInt(c.id);
+			reply.addChar(c.level);
+			reply.addChar(c.gender);
+			reply.addChar(c.hairStyle);
+			reply.addChar(c.hairColor);
+			reply.addChar(c.race);
+			reply.addChar(c.admin);
+			
+			// TODO: real paperdoll data
+			// character->AddPaperdollData(reply, "BAHSW");*/
+			reply.addShort(0);
+			reply.addShort(0);
+			reply.addShort(0);
+			reply.addShort(0);
+			reply.addShort(0);
+			
+			reply.addByte(255);
+		});
+		
+		player.send(reply);
+	}
+	
+	switch (reader.action) {
+		case packet.action.REQUEST:
+			character_request();
+			break;
+		case packet.action.CREATE:
+			character_create();
+			break;
+		case packet.action.TAKE:
+			character_take();
+			break;
+		case packet.action.REMOVE:
+			character_remove();
+			break;
 		default:
 			break;
 	}

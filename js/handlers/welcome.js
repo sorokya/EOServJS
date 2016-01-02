@@ -13,7 +13,7 @@ function welcome_handler(player, reader) {
 	// selected a character
 	function welcome_request() {
 		var id = reader.getInt(); // character id
-		var char = player.characters.filter(function(c) {
+		var char = player.characters.filter(function (c) {
 			return c.id === id;
 		})[0];
 		
@@ -91,10 +91,10 @@ function welcome_handler(player, reader) {
 		reply.addShort(player.character.adjust_con);
 		reply.addShort(player.character.adjust_cha);
 		
-        utils.forEach(player.character.paperdoll, function(item) {
-           reply.addShort(item); 
-        });
-        
+		utils.forEach(player.character.paperdoll, function (item) {
+			reply.addShort(item);
+		});
+		
 		reply.addChar(player.character.guild_rank);
 		reply.addShort(76); // Jail Map ID
 		reply.addShort(4); // ?
@@ -106,7 +106,7 @@ function welcome_handler(player, reader) {
 		reply.addShort(2); // ?
 		reply.addChar(player.character.usage === 0 ? 2 : 0); // login warning message
 		reply.addByte(255);
-		player.send(reply); 
+		player.send(reply);
 	}
 	
 	// welcome message
@@ -114,14 +114,14 @@ function welcome_handler(player, reader) {
 		reader.getThree(); // ?
 		player.world.loginChar(player.character);
 		player.client.state = player.client.clientState.Playing;
-        
-        var updateCharacters = [];
-        
-        utils.forEach(player.character.map.characters, function(char) {
-           if (player.character.charInRange(char)) {
-               updateCharacters.push(char);
-           } 
-        });
+		
+		var updateCharacters = [];
+		
+		utils.forEach(player.character.map.characters, function (char) {
+			if (player.character.charInRange(char)) {
+				updateCharacters.push(char);
+			}
+		});
 		
 		var reply = packet.builder(packet.family.WELCOME, packet.action.REPLY);
 		reply.addShort(2); // REPLY_WELCOME sub-id
@@ -133,47 +133,47 @@ function welcome_handler(player, reader) {
 		
 		reply.addChar(player.character.weight); // weight
 		reply.addChar(player.character.max_weight); // max weight
-        
-        utils.forEach(player.character.inventory, function(item) {
-           reply.addShort(item.id);
-           reply.addInt(item.amount); 
-        });
+		
+		utils.forEach(player.character.inventory, function (item) {
+			reply.addShort(item.id);
+			reply.addInt(item.amount);
+		});
 		reply.addByte(255);
-        
-        utils.forEach(player.character.spells, function(spell) {
-            reply.addShort(spell.id);
-            reply.addShort(spell.level);
-        });
+		
+		utils.forEach(player.character.spells, function (spell) {
+			reply.addShort(spell.id);
+			reply.addShort(spell.level);
+		});
 		reply.addByte(255);
-        
+		
 		reply.addChar(updateCharacters.length); // num of players
 		reply.addByte(255);
 		
-        utils.forEach(updateCharacters, function(char) {
-            reply.addBreakString(char.name);
-            reply.addShort(char.playerID());
-            reply.addShort(char.map);
-            reply.addShort(char.x);
-            reply.addShort(char.y);
-            reply.addChar(char.direction);
-            reply.addChar(6); // ?
-            reply.addString(char.paddedGuildTag());
-            reply.addChar(char.level);
-            reply.addChar(char.gender);
-            reply.addChar(char.hairStyle);
-            reply.addChar(char.hairColor);
-            reply.addChar(char.race);
-            reply.addShort(char.max_hp);
-            reply.addShort(char.hp);
-            reply.addShort(char.map_tp);
-            reply.addShort(char.tp);
-            char.addPaperdollData(reply, 'B000A0HSW');
-            reply.addChar(char.sitting);
-            reply.addChar(char.hidden);
-            reply.addByte(255);
-        });
-        
-        reply.addByte(255);
+		utils.forEach(updateCharacters, function (char) {
+			reply.addBreakString(char.name);
+			reply.addShort(char.playerID());
+			reply.addShort(char.map);
+			reply.addShort(char.x);
+			reply.addShort(char.y);
+			reply.addChar(char.direction);
+			reply.addChar(6); // ?
+			reply.addString(char.paddedGuildTag());
+			reply.addChar(char.level);
+			reply.addChar(char.gender);
+			reply.addChar(char.hairStyle);
+			reply.addChar(char.hairColor);
+			reply.addChar(char.race);
+			reply.addShort(char.max_hp);
+			reply.addShort(char.hp);
+			reply.addShort(char.map_tp);
+			reply.addShort(char.tp);
+			char.addPaperdollData(reply, 'B000A0HSW');
+			reply.addChar(char.sitting);
+			reply.addChar(char.hidden);
+			reply.addByte(255);
+		});
+		
+		reply.addByte(255);
 		
 		player.send(reply);
 	}
