@@ -1,44 +1,49 @@
 {
-    "host": "0.0.0.0",
-    "port": 8078,
-    
-    "enforceTimestamps": true,
-    "enforceWeight": true,
-    
-    "limitAttack": 251,
-    "chatLength": 128,
-    
-    "EIF": "./data/pub/dat001.eif",
-    "ENF": "./data/pub/dtn001.enf",
-    "ESF": "./data/pub/dsl001.esf",
-    "ECF": "./data/pub/dat001.ecf",
-    
-    "NewsFile": "./data/news.txt",
-    
-    "DropsFile": "./data/drops.ini",
-    "ShopsFile": "./data/shops.ini",
-    "ArenasFile": "./data/arenas.ini",
-    "FormulasFile": "./data/formulas.ini",
-    "HomeFile": "./data/home.ini",
-    "SkillsFile": "./data/skillmaster.ini",
+  "host": "0.0.0.0",
+  "port": 8078,
 
-    "MapDir": "./data/maps",
-    "Maps": 278,
-    
-    "QuestDir": "./data/quests",
-    "Quests": 0,
-    
-    "RecoverSpeed": "90s",
-    "NPCRecoverSpeed": "105s",
-    
-    "HPRecoverRate": "10%",
-    "SitHPRecoverRate": "20%",
-    "TPRecoverRate": "10%",
-    "SitTPRecoverRate": "20%",
-    "NPCRecoverRate": "10%",
-    
-    "MaxItem": 2000000000,
-    
-    "MaxChest": 10000000,
-    "ChestSlots": 5
+  "enforceTimestamps": true,
+  "enforceWeight": true,
+
+  "limitAttack": 251,
+  "chatLength": 128,
+
+  "EIF": "./data/pub/dat001.eif",
+  "ENF": "./data/pub/dtn001.enf",
+  "ESF": "./data/pub/dsl001.esf",
+  "ECF": "./data/pub/dat001.ecf",
+
+  "NewsFile": "./data/news.txt",
+
+  "DropsFile": "./data/drops.ini",
+  "ShopsFile": "./data/shops.ini",
+  "ArenasFile": "./data/arenas.ini",
+  "FormulasFile": "./data/formulas.ini",
+  "HomeFile": "./data/home.ini",
+  "SkillsFile": "./data/skillmaster.ini",
+
+  "MapDir": "./data/maps",
+  "Maps": 278,
+
+  "QuestDir": "./data/quests",
+  "Quests": 0,
+
+  "RecoverSpeed": "90s",
+  "NPCRecoverSpeed": "105s",
+
+  "HPRecoverRate": "10%",
+  "SitHPRecoverRate": "20%",
+  "TPRecoverRate": "10%",
+  "SitTPRecoverRate": "20%",
+  "NPCRecoverRate": "10%",
+
+  "MaxItem": 2000000000,
+  "MaxDrop": 10000000,
+  "DropDistance": 2,
+  "ProtectPlayerDrop": "5s",
+
+  "MaxChest": 10000000,
+  "ChestSlots": 5,
+
+  "DoorTimer":  "3s"
 }

@@ -123,6 +123,14 @@ function welcome_handler(player, reader) {
 			}
 		});
 		
+		var updateItems = [];
+		
+		utils.forEach(player.character.map.items, function (item) {
+			if (player.character.inRange(item.x, item.y)) {
+				updateItems.push(item);
+			}
+		});
+		
 		var reply = packet.builder(packet.family.WELCOME, packet.action.REPLY);
 		reply.addShort(2); // REPLY_WELCOME sub-id
 		reply.addByte(255);
@@ -174,6 +182,14 @@ function welcome_handler(player, reader) {
 		});
 		
 		reply.addByte(255);
+		
+		utils.forEach(updateItems, function (item) {
+			reply.addShort(item.uid);
+			reply.addShort(item.id);
+			reply.addChar(item.x);
+			reply.addChar(item.y);
+			reply.addThree(item.amount);
+		});
 		
 		player.send(reply);
 	}

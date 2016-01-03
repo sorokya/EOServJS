@@ -2,6 +2,8 @@
  * commands.js - handles all admin commands
  */
 
+'use strict';
+
 var structs = require('./structs.js');
 var packet = require('./packet.js');
 
@@ -26,6 +28,18 @@ function warpMeTo(from, args) {
 function spawnItem(from, args) {
 	var id = Number(args[0]);
 	var amount = args.length > 1 ? Number(args[1]) : 1;
+	
+	if (isNaN(id)) {
+		let item = from.world.eif.data.filter(function (_item) {
+			return _item.name.toLowerCase() === args[0].replace(/_/g, ' ').toLowerCase();
+		});
+
+		if (item && item.length > 0) {
+			id = item[0].id;
+		} else {
+			return;
+		}
+	}
 	
 	if (from.addItem(id, amount)) {
 		var reply = packet.builder(packet.family.ITEM, packet.action.GET);

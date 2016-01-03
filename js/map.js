@@ -2,6 +2,8 @@
  * map.js - loads/handles eo map files
  */
 
+'use strict';
+
 var config = require('./config.js');
 var fs = require('fs');
 var packet = require('./packet.js');
@@ -128,7 +130,6 @@ function mapChest(x, y) {
 				}
 			}
 		},
-		
 		delSomeItem: function (id, amount) {
 			var $this = this;
 			for (var i = 0; i < $this.items.length; i++) {
@@ -158,7 +159,6 @@ function mapChest(x, y) {
 			
 			return 0;
 		},
-		
 		update: function (map, exclude) {
 			var $this = this;
 			var builder = packet.builder(packet.family.CHEST, packet.action.AGREE);
@@ -222,6 +222,10 @@ function spawnChests(map) {
 	});
 }
 
+function mapCloseDoor(map, x, y) {
+	map.closeDoor(x, y);
+}
+
 function Map(id, world) {
 	var map = {
 		id: id,
@@ -246,6 +250,187 @@ function Map(id, world) {
 		relogX: 0,
 		relogY: 0,
 		filesize: 0,
+		delItem: function (item, character) {
+			let itemIndex = this.items.indexOf(this.items.filter(function (_item) {
+				return _item.uid === item.uid;
+			})[0]);
+
+			if (itemIndex > -1) {
+				let builder = packet.builder(packet.family.ITEM, packet.action.REMOVE);
+				builder.addShort(item.uid);
+
+				utils.forEach(this.characters, function (char) {
+					if (char !== character && char.inRange(item.x, item.y)) {
+						char.send(builder);
+					}
+				});
+				
+				this.items.splice(itemIndex, 1);
+			}
+		},
+		delSomeItem: function (uid, amount, character) {
+			if (amount < 0) {
+				return;
+			}
+
+			let item = this.items.filter(function (item) {
+				return item.uid === uid;
+			})[0];
+
+			if (item) {
+				if (amount < item.amount) {
+					item.amount -= amount;
+					this.updateItem(item);
+
+					let builder = packet.builder(packet.family.ITEM, packet.action.REMOVE);
+					builder.addShort(item.uid);
+
+					utils.forEach(this.characters, function (char) {
+						if (char !== character && char.inRange(item.x, item.y)) {
+							char.send(builder);
+						}
+					});
+
+					builder = packet.builder(packet.family.ITEM, packet.action.ADD);
+					builder.addShort(item.id);
+					builder.addShort(item.uid);
+					builder.addThree(item.amount);
+					builder.addChar(item.x);
+					builder.addChar(item.y);
+
+					utils.forEach(this.characters, function (char) {
+						if (char.inRange(item.x, item.y)) {
+							char.send(builder);
+						}
+					});
+				} else {
+					this.delItem(item, character);
+				}
+			}
+		},
+		generateItemID: function () {
+			let $this = this;
+			let lowestFreeID = 1;
+			
+			(function findNextID() {
+				utils.forEach($this.items, function (item) {
+					if (item.uid === lowestFreeID) {
+						lowestFreeID = item.uid + 1;
+						findNextID();
+					}
+				});
+			})();
+			
+			return lowestFreeID;
+		},
+		getItem: function (id) {
+			return this.items[this.items.indexOf(this.items.filter(function (item) {
+				return item.uid === id;
+			})[0])];
+		},
+		updateItem: function (item) {
+			let itemIndex = this.items.indexOf(this.items.filter(function (_item) {
+				return _item.uid === item.uid;
+			}));
+			
+			if (itemIndex > -1) {
+				this.items[itemIndex] = item;
+			}
+		},
+		addItem: function (id, amount, x, y, character) {
+			let newItem = mapItem(0, id, amount, x, y, null, null);
+			
+			if (character) {
+				let onTile = 0;
+				let onMap = this.items.length;
+				
+				let itemsOnTile = this.tiles.filter(function (item) {
+					return item.x === x && item.y === y;
+				});
+				
+				if (itemsOnTile && itemsOnTile.length) {
+					onTile = itemsOnTile.length;
+				}
+				
+				if (onTile >= config.MaxTile || onMap >= config.MaxMap) {
+					return newItem;
+				}
+			}
+			
+			newItem.uid = this.generateItemID();
+			
+			let builder = packet.builder(packet.family.ITEM, packet.action.ADD);
+			builder.addShort(id);
+			builder.addShort(newItem.uid);
+			builder.addThree(amount);
+			builder.addChar(x);
+			builder.addChar(y);
+			
+			utils.forEach(this.characters, function (char) {
+				if (char !== character && char.inRange(x, y)) {
+					char.send(builder);
+				}
+			});
+
+			this.items.push(newItem);
+
+			return newItem;
+		},
+		closeDoor: function (x, y) {
+			if (!this.inBounds(x, y)) {
+				return;
+			}
+
+			let tile = this.getTile(x, y);
+			if (tile.warp) {
+				if (tile.warp.spec === structs.warpSpec.NoDoor || !tile.warp.open) {
+					return;
+				}
+
+				tile.warp.open = false;
+				this.setTile(x, y, tile);	
+			}
+		},
+		openDoor: function (character, x, y) {
+			if (!this.inBounds(x, y) || (character && !character.inRange(x, y))) { 
+				return false;
+			}
+
+			let tile = this.getTile(x, y);
+			if (tile.warp) {
+				if (tile.warp.spec === structs.warpSpec.NoDoor || tile.warp.open) {
+					return false;
+				}
+				
+				// NOTE: check if player has key
+				if (character && tile.warp.spec > structs.warpSpec.Door) {
+					if (!character.hasItem(this.world.eif.getKey(tile.warp.spec - structs.warpSpec.Door + 1))) {
+						return false;
+					}
+				}
+
+				let builder = packet.builder(packet.family.DOOR, packet.action.OPEN);
+				builder.addChar(x);
+				builder.addShort(y);
+
+				utils.forEach(this.characters, function (char) {
+					if (char.inRange(x, y)) {
+						char.send(builder);	
+					}
+				});
+
+				tile.warp.open = true;
+				this.setTile(x, y, tile);
+				
+				setTimeout(function () {
+					mapCloseDoor(map, x, y);
+				}, config.DoorTimer);
+
+				return true;
+			}
+
+			return false;
+		},
 		getCharacter: function (name) {
 			return this.characters.filter(function (char) {
 				return char.name === name;
@@ -575,7 +760,7 @@ function Map(id, world) {
 			utils.forEach(this.characters, function (char) {
 				if (char !== character) {
 					for (var i = 0; i < oldCoords.length; i++) {
-						if (char.x === oldCoords[i].x && char.y === oldCoords.y) {
+						if (char.x === oldCoords[i].x && char.y === oldCoords[i].y) {
 							oldChars.push(char);
 						} else if (char.x === newCoords[i].x && char.y === newCoords[i].y) {
 							newChars.push(char);
@@ -589,7 +774,9 @@ function Map(id, world) {
 			});
 			
 			utils.forEach(this.items, function (item) {
-                
+				if (character.inRange(item.x, item.y)) {
+					newItems.push(item);
+				}
 			});
 			
 			var builder = packet.builder(packet.family.AVATAR, packet.action.REMOVE);
@@ -675,7 +862,11 @@ function Map(id, world) {
 			builder.addByte(255);
 			
 			utils.forEach(newItems, function (item) {
-                
+				builder.addShort(item.uid);
+				builder.addShort(item.id);
+				builder.addChar(item.x);
+				builder.addChar(item.y);
+				builder.addThree(item.amount);
 			});
 			
 			character.send(builder);
@@ -745,7 +936,7 @@ function Map(id, world) {
 					for (var i = 0; i < this.width * this.height; i++) {
 						this.tiles.push({
 							tilespec: -1,
-							warp: {},
+							warp: null,
 							walkable: function (npc) {
 								switch (this.tilespec) {
 									case structs.tileSpec.wall:

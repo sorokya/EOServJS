@@ -1,43 +1,51 @@
-var fs = require('fs');
-var packet = require('./packet.js');
-var structs = require('./structs.js');
-var init_handler = require('./handlers/init.js');
-var login_handler = require('./handlers/login.js');
-var account_handler = require('./handlers/account.js');
-var character_handler = require('./handlers/character.js');
-var welcome_handler = require('./handlers/welcome.js');
-var face_handler = require('./handlers/face.js');
-var walk_handler = require('./handlers/walk.js');
-var emote_handler = require('./handlers/emote.js');
-var sit_handler = require('./handlers/sit.js');
-var chair_handler = require('./handlers/chair.js');
-var attack_handler = require('./handlers/attack.js');
-var talk_handler = require('./handlers/talk.js');
-var warp_handler = require('./handlers/warp.js');
-var chest_handler = require('./handlers/chest.js');
-var paperdoll_handler = require('./handlers/paperdoll.js');
-var utils = require('./utils.js');
+/*
+ * client.js - keeps track of an active eo client
+ */
+
+'use strict';
+
+let fs = require('fs');
+let packet = require('./packet');
+let structs = require('./structs');
+let init_handler = require('./handlers/init');
+let login_handler = require('./handlers/login');
+let account_handler = require('./handlers/account');
+let character_handler = require('./handlers/character');
+let welcome_handler = require('./handlers/welcome');
+let face_handler = require('./handlers/face');
+let walk_handler = require('./handlers/walk');
+let emote_handler = require('./handlers/emote');
+let sit_handler = require('./handlers/sit');
+let chair_handler = require('./handlers/chair');
+let attack_handler = require('./handlers/attack');
+let talk_handler = require('./handlers/talk');
+let warp_handler = require('./handlers/warp');
+let chest_handler = require('./handlers/chest');
+let paperdoll_handler = require('./handlers/paperdoll');
+let door_handler = require('./handlers/door');
+let item_handler = require('./handlers/item');
+let utils = require('./utils');
 
 module.exports = function (server, socket) {
-	var clientState = {
+	let clientState = {
 		Uninitialized: 0,
 		Initialized: 1,
 		LoggedIn: 2,
 		Playing: 3
 	}
 	
-	var packetState = {
+	let packetState = {
 		ReadLen1: 0,
 		ReadLen2: 1,
 		ReadData: 2
 	}
 	
-	var seq_start = 0;
-	var upcoming_seq_start = -1;
-	var seq = 0;
+	let seq_start = 0;
+	let upcoming_seq_start = -1;
+	let seq = 0;
 	
 	// packet processor
-	var processor = packet.processor();
+	let processor = packet.processor();
 	
 	function initNewSequence() {
 		seq_start = utils.random(0, 1757);
@@ -52,21 +60,21 @@ module.exports = function (server, socket) {
 	}
 	
 	function getInitSequenceBytes() {
-		var s1_max = (seq_start + 13) / 7;
-		var s1_min = Math.max(0, (seq_start - 252 + 13 + 6) / 7);
-		var s1 = utils.random(s1_min, s1_max);
-		var s2 = seq_start - s1 * 7 + 13;
+		let s1_max = (seq_start + 13) / 7;
+		let s1_min = Math.max(0, (seq_start - 252 + 13 + 6) / 7);
+		let s1 = utils.random(s1_min, s1_max);
+		let s2 = seq_start - s1 * 7 + 13;
 		
 		return [s1, s2];
 	}
 	
 	function genSequence() {
-		var result = seq_start + seq;
+		let result = seq_start + seq;
 		seq = (seq + 1) % 10;
 		return result;
 	}
 	
-	var client = {
+	let client = {
 		clientState: clientState,
 		packetState: packetState,
 		
@@ -84,21 +92,21 @@ module.exports = function (server, socket) {
 		initNewSequence: initNewSequence,
 		getInitSequenceBytes: getInitSequenceBytes,
 		send: function (builder) {
-			var data = processor.encode(builder.get());
+			let data = processor.encode(builder.get());
 			
-			var buffData = [];
-			for (var i = 0; i < data.length; i++) {
+			let buffData = [];
+			for (let i = 0; i < data.length; i++) {
 				buffData.push(data[i].charCodeAt());
 			}
 			
-			var buff = new Buffer(buffData);
+			let buff = new Buffer(buffData);
 			socket.write(buff);
 		},
 		uploadFile: function (type, filename, init_reply) {
-			var $this = this;
+			let $this = this;
 			fs.readFile('./' + filename, function (err, file) {
-				var fileStr = packet.bufferToStr(file);
-				var builder = packet.builder(packet.family.INIT, packet.action.INIT);
+				let fileStr = packet.bufferToStr(file);
+				let builder = packet.builder(packet.family.INIT, packet.action.INIT);
 				builder.addChar(init_reply);
 				
 				if (type !== structs.fileType.map) {
@@ -112,9 +120,9 @@ module.exports = function (server, socket) {
 		upload: function (type, id, init_reply) {
 			switch (type) {
 				case structs.fileType.map:
-					var fileName = '';
+					let fileName = '';
 					
-					for (var i = 0; i < 5 - id.toString().length; i++) {
+					for (let i = 0; i < 5 - id.toString().length; i++) {
 						fileName += '0';
 					}
 					
@@ -147,18 +155,18 @@ module.exports = function (server, socket) {
 	}
 	
 	function execute(data) {
-		var decData = processor.decode(data);
-		var reader = packet.reader(decData);
+		let decData = processor.decode(data);
+		let reader = packet.reader(decData);
 		
 		if (reader.family !== packet.family.INIT) {
-			var pingReply = reader.family === packet.family.CONNECTION && reader.action === packet.action.PING;
+			let pingReply = reader.family === packet.family.CONNECTION && reader.action === packet.action.PING;
 			
 			if (pingReply) {
 				pongNewSequence();
 			}
 			
-			var client_seq;
-			var server_seq = genSequence();
+			let client_seq;
+			let server_seq = genSequence();
 			if (server_seq >= 253) {
 				client_seq = reader.getShort();
 				
@@ -223,22 +231,28 @@ module.exports = function (server, socket) {
 			case packet.family.PAPERDOLL:
 				paperdoll_handler(client.player.character, reader);
 				break;
+			case packet.family.DOOR:
+				door_handler(client.player.character, reader);
+				break;
+			case packet.family.ITEM:
+				item_handler(client.player.character, reader);
+				break;
 			default:
 				break;
 		}
 	}
 	
 	socket.on('data', function (data) {
-		var dataStr = packet.bufferToStr(data);
-		var done = false;
-		var oldlength;
+		let dataStr = packet.bufferToStr(data).split('');
+		let done = false;
+		let oldlength;
 		
 		while (dataStr.length > 0 && !done) {
 			switch (client.packet_state) {
 				case client.packetState.ReadLen1:
 					client.raw_length[0] = dataStr[0].charCodeAt();
 					dataStr[0] = '\0';
-					dataStr = dataStr.substr(1);
+					dataStr.splice(0, 1);
 					client.packet_state = client.packetState.ReadLen2;
 					
 					if (dataStr.length === 0) {
@@ -247,7 +261,7 @@ module.exports = function (server, socket) {
 				case client.packetState.ReadLen2:
 					client.raw_length[1] = dataStr[0].charCodeAt();
 					dataStr[0] = '\0';
-					dataStr = dataStr.substr(1);
+					dataStr.splice(0, 1);
 					client.length = packet.packEOInt(client.raw_length[0], client.raw_length[1]);
 					client.packet_state = client.packetState.ReadData;
 					
@@ -256,13 +270,13 @@ module.exports = function (server, socket) {
 					}
 				case client.packetState.ReadData:
 					oldlength = client.data.length;
-					client.data += dataStr.substr(0, client.length);
+					client.data += dataStr.join('').substr(0, client.length);
 					
-					for (var i = 0; i < Math.min(dataStr.length, client.length); i++) {
+					for (let i = 0; i < Math.min(dataStr.length, client.length); i++) {
 						dataStr[i] = '\0';
 					}
 					
-					dataStr = dataStr.substr(0, client.length);
+					dataStr.splice(0, client.length);
 					client.length -= client.data.length - oldlength;
 					
 					if (client.length === 0) {

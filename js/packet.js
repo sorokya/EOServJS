@@ -507,7 +507,8 @@ function packetReader(d) {
 		getInt: getInt,
 		getFixedString: getFixedString,
 		getBreakString: getBreakString,
-		getEndString: getEndString
+		getEndString: getEndString,
+		remaining: remaining
 	};
 }
 
