@@ -2,6 +2,8 @@
  * eodata.js - loads/stores pub file data
  */
 
+'use strict'
+
 var config = require('./config.js');
 var fs = require('fs');
 var utils = require('./utils.js');
@@ -478,6 +480,16 @@ function homes() {
 					}
 				}
 			});
+			
+			for (let i = 0; i < homes.length; i++) {
+				let map = homes[i].location.split(',')[0];
+				let x = homes[i].location.split(',')[1];
+				let y = homes[i].location.split(',')[2];
+
+				homes[i].map = Number(map);
+				homes[i].x = Number(x);
+				homes[i].y = Number(y);
+			}
 			
 			return homes;
 		}

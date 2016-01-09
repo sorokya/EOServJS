@@ -13,7 +13,64 @@ function item_handler(character, reader) {
 	
 	// NOTE: player uses an item
 	function item_use() {
+		if (character.trading) {
+			return;
+		}
 
+		let id = reader.getShort();
+
+		if (character.hasItem(id)) {
+			let item = character.world.eif.get(id);
+			let reply = packet.builder(packet.family.ITEM, packet.action.REPLY);
+			reply.addChar(item.type);
+			reply.addShort(id);
+
+			switch (item.type) {
+				case structs.EIFType.teleport:
+					if (!character.map.scroll) {
+						break;
+					}
+					
+					if (item.scrollMap === 0) {
+						if (character.mapid === character.spawnMap() && character.x === character.spawnX() && character.y === character.spawnY()) {
+							break;
+						}
+					} else {
+						if (character.mapid = item.scrollMap && character.x === item.scrollX && character.y === item.scrollY) {
+							break;
+						}
+					}
+					
+					character.delItem(id, 1);
+					
+					reply.addInt(character.hasItem(id));
+					reply.addChar(character.weight);
+					reply.addChar(character.max_weight);
+					
+					if (item.scrollMap === 0) {
+						character.warp(character.spawnMap(), character.spawnX(), character.spawnY(), structs.warpAnimation.scroll);
+					} else {
+						character.warp(item.scrollMap, item.scrollX, item.scrollY, structs.warpAnimation.scroll);
+					}
+					
+					character.send(reply);
+
+					break;
+				case structs.EIFType.heal:
+					break;
+				case structs.EIFType.hairDye:
+					break;
+				case structs.EIFType.beer:
+					break;
+				case structs.EIFType.effectPotion:
+					break;
+				case structs.EIFType.cureCurse:
+					break;
+				case structs.EIFType.expReward:
+					break;
+
+			}
+		}
 	}
 	
 	// NOTE: player drops an item on the ground

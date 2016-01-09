@@ -3,17 +3,19 @@
  * handles welcome packet
  */
 
-var packet = require('../packet.js');
-var utils = require('../utils.js');
-var data = require('../data.js');
-var structs = require('../structs.js');
+'use strict';
+
+let packet = require('../packet.js');
+let utils = require('../utils.js');
+let data = require('../data.js');
+let structs = require('../structs.js');
 
 function welcome_handler(player, reader) {
 	
 	// selected a character
 	function welcome_request() {
-		var id = reader.getInt(); // character id
-		var char = player.characters.filter(function (c) {
+		let id = reader.getInt(); // character id
+		let char = player.characters.filter(function (c) {
 			return c.id === id;
 		})[0];
 		
@@ -23,10 +25,10 @@ function welcome_handler(player, reader) {
 		
 		player.character = char;
 		player.character.calculateStats();
-		var guild_str = '';
-		var guild_rank = '';
+		let guild_str = '';
+		let guild_rank = '';
 		
-		var reply = packet.builder(packet.family.WELCOME, packet.action.REPLY);
+		let reply = packet.builder(packet.family.WELCOME, packet.action.REPLY);
 		reply.addShort(1); // REPLY_WELCOME sub-id
 		reply.addShort(player.id);
 		reply.addInt(player.character.id);
@@ -115,27 +117,32 @@ function welcome_handler(player, reader) {
 		player.world.loginChar(player.character);
 		player.client.state = player.client.clientState.Playing;
 		
-		var updateCharacters = [];
-		
+		let updateCharacters = [];
 		utils.forEach(player.character.map.characters, function (char) {
 			if (player.character.charInRange(char)) {
 				updateCharacters.push(char);
 			}
 		});
 		
-		var updateItems = [];
-		
+		let updateItems = [];
 		utils.forEach(player.character.map.items, function (item) {
 			if (player.character.inRange(item.x, item.y)) {
 				updateItems.push(item);
 			}
 		});
+
+		let updateNPCs = [];
+		utils.forEach(player.character.map.npcs, function (npc) {
+		    if (player.character.inRange(npc.x, npc.y)) {
+		        updateNPCs.push(npc);
+		    }
+		});
 		
-		var reply = packet.builder(packet.family.WELCOME, packet.action.REPLY);
+		let reply = packet.builder(packet.family.WELCOME, packet.action.REPLY);
 		reply.addShort(2); // REPLY_WELCOME sub-id
 		reply.addByte(255);
 		
-		for (var i = 0; i < 9; i++) {
+		for (let i = 0; i < 9; i++) {
 			reply.addBreakString('Server News');
 		}
 		
@@ -180,6 +187,16 @@ function welcome_handler(player, reader) {
 			reply.addChar(char.hidden);
 			reply.addByte(255);
 		});
+
+		utils.forEach(updateNPCs, function (npc) {
+		    if (npc.alive) {
+		        reply.addChar(npc.index);
+		        reply.addShort(npc.id);
+		        reply.addChar(npc.x);
+		        reply.addChar(npc.y);
+		        reply.addChar(npc.direction);
+		    }
+		});
 		
 		reply.addByte(255);
 		
@@ -196,7 +213,7 @@ function welcome_handler(player, reader) {
 	
 	// client wants a file
 	function welcome_agree() {
-		var file = reader.getChar();
+		let file = reader.getChar();
 		
 		switch (file) {
 			case structs.fileType.map:

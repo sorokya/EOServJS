@@ -292,5 +292,11 @@ module.exports = {
 		LockedSilver: 2,
 		LockedCrystal: 3,
 		LockedWraith: 4
+	},
+
+	targetRestrict: {
+	    NPCOnly: 0,
+	    Friendly: 1,
+        Opponent: 2
 	}
 };

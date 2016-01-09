@@ -4,11 +4,12 @@
 
 'use strict';
 
-var config = require('./config.js');
-var fs = require('fs');
-var packet = require('./packet.js');
-var utils = require('./utils.js');
-var structs = require('./structs.js');
+let config = require('./config.js');
+let fs = require('fs');
+let packet = require('./packet.js');
+let utils = require('./utils.js');
+let structs = require('./structs.js');
+let npc = require('./npc.js');
 
 function mapItem(uid, id, amount, x, y, owner, unProtectTime) {
 	return {
@@ -770,7 +771,15 @@ function Map(id, world) {
 			});
 			
 			utils.forEach(this.npcs, function (npc) {
-                
+			    if (npc.alive) {
+			        for (let i = 0; i < oldCoords.length; i++) {
+			            if (npc.x === oldCoords[i].x && npc.y === oldCoords[i].y) {
+			                oldNPCs.push(npc);
+			            } else if (npc.x === newCoords[i].x && npc.y === newCoords[i].y) {
+			                newNPCs.push(npc);
+			            }
+			        }
+			    }
 			});
 			
 			utils.forEach(this.items, function (item) {
@@ -871,13 +880,21 @@ function Map(id, world) {
 			
 			character.send(builder);
 			
-			builder = packet.builder(packet.family.APPEAR, packet.action.REPLY);
 			utils.forEach(newNPCs, function (npc) {
-                
+			    builder = packet.builder(packet.family.APPEAR, packet.action.REPLY);
+			    builder.addChar(0);
+			    builder.addByte(255);
+			    builder.addChar(npc.index);
+			    builder.addShort(npc.id);
+			    builder.addChar(npc.x);
+			    builder.addChar(npc.y);
+			    builder.addChar(npc.direction);
+
+			    character.send(builder);
 			});
 			
 			utils.forEach(oldNPCs, function (npc) {
-                // TODO: remove from view
+			    npc.removeFromView(character);
 			});
 			
 			// TODO: check quests rules
@@ -1048,17 +1065,24 @@ function Map(id, world) {
 					buf = readBuf(fData, 1);
 					outersize = packet.packEOInt(buf[0].charCodeAt());
 					var index = 0;
-					for (var i = 0; i < outersize; i++) {
+					for (let i = 0; i < outersize; i++) {
 						buf = readBuf(fData, 8);
-						var x = packet.packEOInt(buf[0].charCodeAt());
-						var y = packet.packEOInt(buf[1].charCodeAt());
-						var npcID = packet.packEOInt(buf[2].charCodeAt(), buf[3].charCodeAt());
-						var spawnType = packet.packEOInt(buf[4].charCodeAt());
-						var spawnTime = packet.packEOInt(buf[5].charCodeAt(), buf[6].charCodeAt());
-						var amount = packet.packEOInt(buf[7].charCodeAt());
+						let x = packet.packEOInt(buf[0].charCodeAt());
+						let y = packet.packEOInt(buf[1].charCodeAt());
+						let npcID = packet.packEOInt(buf[2].charCodeAt(), buf[3].charCodeAt());
+						let spawnType = packet.packEOInt(buf[4].charCodeAt());
+						let spawnTime = packet.packEOInt(buf[5].charCodeAt(), buf[6].charCodeAt());
+						let amount = packet.packEOInt(buf[7].charCodeAt());
 						
-						for (var ii = 0; ii < amount; ii++) {
-                            // TODO: NPCs
+						for (let ii = 0; ii < amount; ii++) {
+						    if (!this.inBounds(x, y)) {
+						        console.log(`An NPC Spawned on a non existant title ${x},${y} on map ${this.id}`);
+						        continue;
+						    }
+
+						    let newNPC = npc(this, npcID, x, y, spawnType, spawnTime, index++);
+						    this.npcs.push(newNPC);
+						    newNPC.spawn();
 						}
 					}
 					

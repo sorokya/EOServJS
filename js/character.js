@@ -245,6 +245,18 @@ function Character(data, world, user) {
 		quests: [],
 		quests_inactive: [],
 		
+		spawnMap: function () {
+			return this.world.getHome(this).map;
+		},
+		
+		spawnX: function () {
+			return this.world.getHome(this).x;
+		},
+		
+		spawnY: function () {
+			return this.world.getHome(this).y;
+		},
+		
 		unequip: function (item, subLoc) {
 			if (item === 0) {
 				return false;

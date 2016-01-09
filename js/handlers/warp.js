@@ -17,7 +17,6 @@ function warp_handler(character, reader) {
 		}
 		
 		var updateCharacters = [];
-		
 		utils.forEach(character.map.characters, function (char) {
 			if (char.charInRange(character)) {
 				updateCharacters.push(char);
@@ -25,9 +24,13 @@ function warp_handler(character, reader) {
 		});
 
 		var updateNPCs = [];
+		utils.forEach(character.map.npcs, function (npc) {
+		    if (character.inRange(npc.x, npc.y)) {
+		        updateNPCs.push(npc);
+		    }
+		});
 		
 		var updateItems = [];
-		
 		utils.forEach(character.map.items, function (item) {
 			if (character.inRange(item.x, item.y)) {
 				updateItems.push(item);
@@ -62,6 +65,16 @@ function warp_handler(character, reader) {
 			reply.addChar(char.sitting);
 			reply.addChar(char.hidden);
 			reply.addByte(255);
+		});
+
+		utils.forEach(updateNPCs, function (npc) {
+		    if (npc.alive) {
+		        reply.addChar(npc.index);
+		        reply.addShort(npc.id);
+		        reply.addChar(npc.x);
+		        reply.addChar(npc.y);
+		        reply.addChar(npc.direction);
+		    }
 		});
 		
 		reply.addByte(255);
