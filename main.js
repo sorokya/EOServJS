@@ -1,5 +1,7 @@
-var data = require('./js/data.js');
-var server = require('./js/server.js');
+'use strict';
+
+let data = require('./js/data.js');
+let server = require('./js/server.js');
 
 console.log('____ ____ ____ ____ ____ _  _   _ ____');
 console.log('|___ |  | [__  |___ |__/ |  |   | [__ ');

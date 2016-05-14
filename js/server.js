@@ -1,19 +1,25 @@
-var net = require('net');
-var config = require('./config.js');
-var client = require('./client.js');
-var world = require('./world.js');
-var eodata = require('./eodata.js');
-var utils = require('./utils.js');
+'use strict';
+
+const net = require('net');
+const config = require('./config.js');
+const client = require('./client.js');
+const world = require('./world.js');
+const eodata = require('./eodata.js');
+const utils = require('./utils.js');
+
+const EventEmitter = require('events').EventEmitter;
+const util = require('util');
 
 var server;
 var clients = [];
 
-var eoserver = {
-	clients: clients,
-	world: null,
-	eodata: null,
-	running: true,
-	start: function () {
+function EOServer() {
+	this.clients = clients;
+	this.world = null;
+	this.eodata = null;
+	this.running = false;
+	this.start = function () {
+		this.world = world(this);
 		this.eodata = eodata();
 		this.world.eif = this.eodata.EIF;
 		this.world.enf = this.eodata.ENF;
@@ -26,22 +32,45 @@ var eoserver = {
 		server = net.createServer();
 		server.listen(config.port, config.host);
 		
-		console.log('Server Listening on ' + config.host + ':' + config.port);
-		
+		this.running = true;
+		this.emit('log', 'Server Listening on ' + config.host + ':' + config.port);
+		this.emit('ready');
+
+		var $this = this;
 		server.on('connection', function (socket) {
-			console.log('New connection from ' + socket.remoteAddress);
+			$this.emit('log', 'New connection from ' + socket.remoteAddress);
 			client(eoserver, socket);
 		});
 		
-		var $this = this;
 		setInterval(function () {
 			utils.forEach($this.clients, function (client) {
 				client.tick();
 			});
 		}, 100);
 	}
+	
+	this.stop = function () {
+		this.running = false;
+		
+		let $this = this;
+		utils.forEach(this.clients, function (c) {
+			if (c.player) {
+				$this.world.logout(c.player.username);
+			}
+		});
+		
+		utils.forEach(this.clients, function (c) {
+			c.close();
+		});
+
+		server.close();
+	}
+
+	EventEmitter.call(this);
 }
 
-eoserver.world = world(eoserver);
+util.inherits(EOServer, EventEmitter);
+
+let eoserver = new EOServer;
 
 module.exports = eoserver;

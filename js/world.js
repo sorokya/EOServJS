@@ -13,7 +13,8 @@ var packet = require('./packet.js');
 var config = require('./config.js');
 
 module.exports = function (server) {
-	var world = {
+    var world = {
+        server: server,
 		characters: [],
 		parties: [],
 		homes: null,

@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = {
 	random: function (min, max) {
 		max++;
@@ -13,5 +15,8 @@ module.exports = {
 		var dy = Math.abs(y1 - y2);
 		
 		return dx + dy;
+	},
+	log: function (msg) {
+	    console.log(msg);
 	}
 };

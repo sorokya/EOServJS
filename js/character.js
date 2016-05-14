@@ -654,7 +654,7 @@ function Character(data, world, user) {
 		},
 		
 		login: function () {
-            
+		    this.world.server.emit('character-login', this.name);
 		},
 		
 		inRange: function (x, y) {
