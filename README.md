@@ -1,3 +1,6 @@
+# Archived
+No plans to work on this again :)
+
 # EOServ.js
 An [Endless Online](http://endless-online.com) Server Emulator written in NodeJS
 
